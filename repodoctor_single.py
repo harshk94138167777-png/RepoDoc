@@ -747,6 +747,13 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
     
     dups_str = f"{len(data.duplicates)}{fmt_delta(deltas['duplicates'], inverted=True) if deltas else ''}"
     print(f"Duplicate blocks:       {dups_str}")
+
+    sorted_files = sorted(data.files, key=lambda f: f.lines, reverse=True)
+    if sorted_files and sorted_files[0].lines > 0:
+        print("\nHeaviest Files:")
+        for i, f in enumerate(sorted_files[:3], 1):
+            if f.lines > 0:
+                print(f"  {i}. {f.relative_path} ({f.lines:,} lines)")
     print()
 
     print(c("SECURITY", "1"))
