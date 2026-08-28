@@ -69,6 +69,30 @@ def main():
     if args.baseline:
         deltas = compare_baseline(data, args.baseline)
 
+    if args.badge and data.score:
+        color = "#4c1" if data.score.score >= 80 else ("#dfb317" if data.score.score >= 50 else "#e05d44")
+        svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="140" height="20">
+  <linearGradient id="b" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient>
+  <clipPath id="a"><rect width="140" height="20" rx="3" fill="#fff"/></clipPath>
+  <g clip-path="url(#a)">
+    <rect width="80" height="20" fill="#555"/>
+    <rect x="80" width="60" height="20" fill="{color}"/>
+    <rect width="140" height="20" fill="url(#b)"/>
+  </g>
+  <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
+    <text x="40" y="15" fill="#010101" fill-opacity=".3">RepoDoctor</text>
+    <text x="40" y="14">RepoDoctor</text>
+    <text x="109" y="15" fill="#010101" fill-opacity=".3">{data.score.score}/100</text>
+    <text x="109" y="14">{data.score.score}/100</text>
+  </g>
+</svg>'''
+        try:
+            with open(args.badge, "w", encoding="utf-8") as bf:
+                bf.write(svg)
+            print(f"SVG badge successfully written to {args.badge}")
+        except Exception:
+            pass
+            
     if args.json:
         print(get_json_report(data, args.large_file_lines))
     elif args.export_prompt:
@@ -100,7 +124,7 @@ def main():
         # Check if stdout is TTY for color
         use_color = not args.no_color and sys.stdout.isatty()
         exec_time = time.time() - start_time
-        print_terminal_report(data, use_color, args.large_file_lines, deltas, exec_time)
+        print_terminal_report(data, use_color, args.large_file_lines, deltas, exec_time, args.tree)
 
     sys.exit(exit_code)
 

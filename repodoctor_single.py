@@ -120,6 +120,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--html", type=str, help="Output a self-contained HTML report to the specified file", default="")
     parser.add_argument("--baseline", type=str, help="Path to a previous JSON report to compare against", default="")
     parser.add_argument("--no-color", action="store_true", help="Disable ANSI color output")
+    parser.add_argument("--badge", type=str, metavar="FILE", help="Generate an SVG health badge", default="")
+    parser.add_argument("--tree", action="store_true", help="Print an ASCII project tree")
     parser.add_argument("--export-prompt", type=str, metavar="FILE", help="Export the codebase into a single text file for LLM prompting", default="")
     parser.add_argument("--ignore", type=str, help="Comma-separated list of custom directories to ignore", default="")
     parser.add_argument("--large-file-lines", type=int, help="Threshold for large file lines", default=500)
@@ -649,7 +651,35 @@ def calculate_score(data: ReportData, large_file_threshold: int = 500) -> Health
 
 
 
-def print_terminal_report(data: ReportData, use_color: bool = True, large_file_threshold: int = 500, deltas: Optional[Dict[str, int]] = None, exec_time: Optional[float] = None) -> None:
+
+def print_project_tree(data, c_func):
+    print(c_func("PROJECT TREE", "1"))
+    print(c_func("────────────────────────────────────────────────────────────", "90"))
+    paths = [f.relative_path.replace("\\", "/") for f in data.files]
+    tree = {}
+    for p in paths:
+        parts = p.split("/")
+        curr = tree
+        for part in parts:
+            if part not in curr:
+                curr[part] = {}
+            curr = curr[part]
+    
+    lines = []
+    def traverse(node, prefix=""):
+        if len(lines) > 50: return
+        keys = sorted(list(node.keys()))
+        for i, key in enumerate(keys):
+            is_last = (i == len(keys) - 1)
+            lines.append(prefix + ("└── " if is_last else "├── ") + key)
+            traverse(node[key], prefix + ("    " if is_last else "│   "))
+            
+    traverse(tree)
+    if len(lines) > 50: lines.append("... (tree truncated)")
+    print("\n".join(lines))
+    print()
+
+def print_terminal_report(data: ReportData, use_color: bool = True, large_file_threshold: int = 500, deltas: Optional[Dict[str, int]] = None, exec_time: Optional[float] = None, show_tree: bool = False) -> None:
     def c(text: str, color_code: str) -> str:
         if not use_color: return text
         return f"\033[{color_code}m{text}\033[0m"
@@ -1009,6 +1039,30 @@ def main():
     if args.baseline:
         deltas = compare_baseline(data, args.baseline)
 
+    if args.badge and data.score:
+        color = "#4c1" if data.score.score >= 80 else ("#dfb317" if data.score.score >= 50 else "#e05d44")
+        svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="140" height="20">
+  <linearGradient id="b" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient>
+  <clipPath id="a"><rect width="140" height="20" rx="3" fill="#fff"/></clipPath>
+  <g clip-path="url(#a)">
+    <rect width="80" height="20" fill="#555"/>
+    <rect x="80" width="60" height="20" fill="{color}"/>
+    <rect width="140" height="20" fill="url(#b)"/>
+  </g>
+  <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
+    <text x="40" y="15" fill="#010101" fill-opacity=".3">RepoDoctor</text>
+    <text x="40" y="14">RepoDoctor</text>
+    <text x="109" y="15" fill="#010101" fill-opacity=".3">{data.score.score}/100</text>
+    <text x="109" y="14">{data.score.score}/100</text>
+  </g>
+</svg>'''
+        try:
+            with open(args.badge, "w", encoding="utf-8") as bf:
+                bf.write(svg)
+            print(f"SVG badge successfully written to {args.badge}")
+        except Exception:
+            pass
+            
     if args.json:
         print(get_json_report(data, args.large_file_lines))
     elif args.export_prompt:
@@ -1040,7 +1094,7 @@ def main():
         # Check if stdout is TTY for color
         use_color = not args.no_color and sys.stdout.isatty()
         exec_time = time.time() - start_time
-        print_terminal_report(data, use_color, args.large_file_lines, deltas, exec_time)
+        print_terminal_report(data, use_color, args.large_file_lines, deltas, exec_time, args.tree)
 
     sys.exit(exit_code)
 

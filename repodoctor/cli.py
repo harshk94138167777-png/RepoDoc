@@ -18,6 +18,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--html", type=str, help="Output a self-contained HTML report to the specified file", default="")
     parser.add_argument("--baseline", type=str, help="Path to a previous JSON report to compare against", default="")
     parser.add_argument("--no-color", action="store_true", help="Disable ANSI color output")
+    parser.add_argument("--badge", type=str, metavar="FILE", help="Generate an SVG health badge", default="")
+    parser.add_argument("--tree", action="store_true", help="Print an ASCII project tree")
     parser.add_argument("--export-prompt", type=str, metavar="FILE", help="Export the codebase into a single text file for LLM prompting", default="")
     parser.add_argument("--ignore", type=str, help="Comma-separated list of custom directories to ignore", default="")
     parser.add_argument("--large-file-lines", type=int, help="Threshold for large file lines", default=500)

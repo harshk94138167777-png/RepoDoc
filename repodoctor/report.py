@@ -5,7 +5,35 @@ from .models import ReportData
 
 from typing import Dict, Optional
 
-def print_terminal_report(data: ReportData, use_color: bool = True, large_file_threshold: int = 500, deltas: Optional[Dict[str, int]] = None, exec_time: Optional[float] = None) -> None:
+
+def print_project_tree(data, c_func):
+    print(c_func("PROJECT TREE", "1"))
+    print(c_func("────────────────────────────────────────────────────────────", "90"))
+    paths = [f.relative_path.replace("\\", "/") for f in data.files]
+    tree = {}
+    for p in paths:
+        parts = p.split("/")
+        curr = tree
+        for part in parts:
+            if part not in curr:
+                curr[part] = {}
+            curr = curr[part]
+    
+    lines = []
+    def traverse(node, prefix=""):
+        if len(lines) > 50: return
+        keys = sorted(list(node.keys()))
+        for i, key in enumerate(keys):
+            is_last = (i == len(keys) - 1)
+            lines.append(prefix + ("└── " if is_last else "├── ") + key)
+            traverse(node[key], prefix + ("    " if is_last else "│   "))
+            
+    traverse(tree)
+    if len(lines) > 50: lines.append("... (tree truncated)")
+    print("\n".join(lines))
+    print()
+
+def print_terminal_report(data: ReportData, use_color: bool = True, large_file_threshold: int = 500, deltas: Optional[Dict[str, int]] = None, exec_time: Optional[float] = None, show_tree: bool = False) -> None:
     def c(text: str, color_code: str) -> str:
         if not use_color: return text
         return f"\033[{color_code}m{text}\033[0m"
