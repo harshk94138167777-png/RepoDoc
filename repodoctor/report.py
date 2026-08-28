@@ -129,6 +129,9 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
     high_nesting = sum(1 for f in data.files if f.metrics and f.metrics.max_nesting > 4)
     print(f"High nesting:           {high_nesting}")
     
+    total_smells = sum(len(f.code_smells) for f in data.files if f.code_smells)
+    print(f"Code smells (Linting):  {total_smells}")
+    
     todos_str = f"{len(data.todos)}{fmt_delta(deltas['todos'], inverted=True) if deltas else ''}"
     print(f"TODO/FIXME items:       {todos_str}")
     

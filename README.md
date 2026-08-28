@@ -17,6 +17,7 @@ RepoDoctor is a production-quality CLI tool that analyzes a software repository 
 - **AST Cyclomatic Complexity**: Parses Python Abstract Syntax Trees mathematically to score code logic complexity.
 - **Security Scanner**: Detects exposed API keys, credentials, and `.env` files and automatically redacts findings.
 - **Git Analytics & Hotspots**: Leverages native Git to report top contributors, uncommitted changes, and your most frequently edited file (Hotspot).
+- **Micro-Linter Engine**: Instantly flags 13+ code smells including trailing whitespace, missing EOF newlines, swallowed errors, and missing alt-text.
 - **Codebase Vocabulary Cloud**: Automatically extracts the most frequently used variable and function names across all your files.
 - **Rich Output Formats**: Choose between Animated ANSI-colored terminal, HTML (`--html`), or JSON (`--json`).
 - **Baseline Tracking**: Compare current scans against past reports (`--baseline`) to track regressions over time.

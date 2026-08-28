@@ -75,4 +75,5 @@ class FileInfo:
     language: str
     relative_path: str
     metrics: Optional[FileMetrics] = None
+    code_smells: List[str] = None
 
