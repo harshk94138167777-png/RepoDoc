@@ -647,6 +647,9 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
         color = "92" if (val > 0 and not inverted) or (val < 0 and inverted) else "91"
         return c(f" ({sign}{val})", color)
 
+    # Hide cursor
+    sys.stdout.write("\033[?25l")
+    
     # Animated Banner
     banner_top = "╔════════════════════════════════════════════════════════════╗"
     banner_bottom = "╚════════════════════════════════════════════════════════════╝"
@@ -675,6 +678,9 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
     sys.stdout.flush()
     
     print(c(banner_bottom, "94"))
+    
+    # Show cursor
+    sys.stdout.write("\033[?25h")
     print()
     print(f"Repository: {data.name}")
     print(f"Path: {data.path}")
