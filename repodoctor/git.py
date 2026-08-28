@@ -37,9 +37,21 @@ def get_git_info(root_path: str) -> GitInfo:
     status_str = run_git(["status", "--porcelain"], root)
     uncommitted = len(status_str.splitlines()) if status_str else 0
 
+    top_contributor = ""
+    try:
+        result = subprocess.run(["git", "shortlog", "-sn", "HEAD"], cwd=root, capture_output=True, text=True, check=True)
+        lines = result.stdout.strip().split('\n')
+        if lines and lines[0]:
+            parts = lines[0].strip().split('\t', 1)
+            if len(parts) == 2:
+                top_contributor = f"{parts[1].strip()} ({parts[0].strip()} commits)"
+    except Exception:
+        pass
+
     return GitInfo(
         available=True,
         branch=branch,
         uncommitted_changes=uncommitted,
-        commits=commits
+        commits=commits,
+        top_contributor=top_contributor
     )

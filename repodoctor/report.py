@@ -114,6 +114,8 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
         print(f"Branch:                 {data.git.branch}")
         print(f"Uncommitted changes:    {data.git.uncommitted_changes}")
         print(f"Commits:                {data.git.commits}")
+        if data.git.top_contributor:
+            print(f"Top Contributor:        {data.git.top_contributor}")
     else:
         print("Git repository:         Not available")
     print()

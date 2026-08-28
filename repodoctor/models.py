@@ -22,9 +22,9 @@ class ReportData:
 class GitInfo:
     available: bool
     branch: str = ""
-
     uncommitted_changes: int = 0
     commits: int = 0
+    top_contributor: str = ""
 
 @dataclass
 class DuplicateBlock:

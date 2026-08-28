@@ -46,9 +46,9 @@ class ReportData:
 class GitInfo:
     available: bool
     branch: str = ""
-
     uncommitted_changes: int = 0
     commits: int = 0
+    top_contributor: str = ""
 
 @dataclass
 class DuplicateBlock:
@@ -572,11 +572,23 @@ def get_git_info(root_path: str) -> GitInfo:
     status_str = run_git(["status", "--porcelain"], root)
     uncommitted = len(status_str.splitlines()) if status_str else 0
 
+    top_contributor = ""
+    try:
+        result = subprocess.run(["git", "shortlog", "-sn", "HEAD"], cwd=root, capture_output=True, text=True, check=True)
+        lines = result.stdout.strip().split('\n')
+        if lines and lines[0]:
+            parts = lines[0].strip().split('\t', 1)
+            if len(parts) == 2:
+                top_contributor = f"{parts[1].strip()} ({parts[0].strip()} commits)"
+    except Exception:
+        pass
+
     return GitInfo(
         available=True,
         branch=branch,
         uncommitted_changes=uncommitted,
-        commits=commits
+        commits=commits,
+        top_contributor=top_contributor
     )
 
 
@@ -745,6 +757,8 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
         print(f"Branch:                 {data.git.branch}")
         print(f"Uncommitted changes:    {data.git.uncommitted_changes}")
         print(f"Commits:                {data.git.commits}")
+        if data.git.top_contributor:
+            print(f"Top Contributor:        {data.git.top_contributor}")
     else:
         print("Git repository:         Not available")
     print()
@@ -924,6 +938,7 @@ if sys.stdout.encoding != 'utf-8':
 
 
 def main():
+    start_time = time.time()
     args = parse_args()
     
     root_path = args.path
@@ -981,7 +996,8 @@ def main():
     else:
         # Check if stdout is TTY for color
         use_color = not args.no_color and sys.stdout.isatty()
-        print_terminal_report(data, use_color, args.large_file_lines, deltas)
+        exec_time = time.time() - start_time
+        print_terminal_report(data, use_color, args.large_file_lines, deltas, exec_time)
 
     sys.exit(exit_code)
 

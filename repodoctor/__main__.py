@@ -1,5 +1,6 @@
 import sys
 import os
+import time
 
 # Force utf-8 output to avoid cp1252 encoding errors on Windows
 if sys.stdout.encoding != 'utf-8':
@@ -23,6 +24,7 @@ from .baseline import compare_baseline
 from .models import ReportData
 
 def main():
+    start_time = time.time()
     args = parse_args()
     
     root_path = args.path
@@ -80,7 +82,8 @@ def main():
     else:
         # Check if stdout is TTY for color
         use_color = not args.no_color and sys.stdout.isatty()
-        print_terminal_report(data, use_color, args.large_file_lines, deltas)
+        exec_time = time.time() - start_time
+        print_terminal_report(data, use_color, args.large_file_lines, deltas, exec_time)
 
     sys.exit(exit_code)
 
