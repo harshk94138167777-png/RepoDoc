@@ -166,6 +166,12 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
         print(f"{key:<23} {icon}")
     print()
 
+    if data.mood:
+        print(f"Project Mood:           {data.mood}")
+    if data.clone_exposer:
+        print(f"👯‍♂️ Clone Exposer:       {data.clone_exposer}")
+    print()
+
     print(c("GIT", "1"))
     print("────────────────────────────────────────────────────────────")
     if data.git.available:

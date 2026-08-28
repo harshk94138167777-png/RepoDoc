@@ -17,6 +17,8 @@ class ReportData:
     structure: Dict[str, str]
     git: 'GitInfo'
     top_words: List[Tuple[str, int]] = None
+    mood: str = None
+    clone_exposer: str = None
     score: Optional[HealthScore] = None
 
 @dataclass

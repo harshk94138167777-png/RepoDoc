@@ -73,6 +73,56 @@ def main():
                 pass
     data.top_words = word_counter.most_common(5)
 
+    
+    # --- Feature: Mood Analyzer ---
+    positive_words = {"clean", "elegant", "thanks", "awesome", "perfect", "great", "love", "refactor"}
+    negative_words = {"stupid", "hack", "hate", "crap", "fuck", "shit", "damn", "ugly", "temp", "fixme", "gross"}
+    pos_count, neg_count = 0, 0
+    for file_info in data.files:
+        if file_info.language != "Unknown":
+            try:
+                with open(file_info.path, "r", encoding="utf-8", errors="ignore") as src:
+                    content = src.read().lower()
+                    for w in positive_words: pos_count += content.count(w)
+                    for w in negative_words: neg_count += content.count(w)
+            except: pass
+    mood_status = "Neutral 😐"
+    if pos_count > neg_count * 2: mood_status = "Happy 😃"
+    elif neg_count > pos_count * 2: mood_status = "Severely Frustrated 😡"
+    elif neg_count > pos_count: mood_status = "Stressed 😰"
+    elif pos_count > 0 or neg_count > 0: mood_status = "Slightly Annoyed 🙄"
+    data.mood = f"{mood_status} ({pos_count} positive, {neg_count} negative words)"
+
+    # --- Feature: Code Clone Exposer ---
+    import difflib
+    highest_ratio = 0
+    clone_pair = None
+    lang_groups = {}
+    for f in data.files:
+        if f.language not in ("Unknown", "JSON", "Markdown") and f.lines > 10:
+            lang_groups.setdefault(f.language, []).append(f)
+            
+    for lang, files in lang_groups.items():
+        if len(files) < 2: continue
+        files.sort(key=lambda x: x.size)
+        for i in range(len(files)-1):
+            f1 = files[i]
+            for j in range(i+1, min(i+4, len(files))):
+                f2 = files[j]
+                if abs(f1.size - f2.size) < max(f1.size, f2.size) * 0.3:
+                    try:
+                        with open(f1.path, "r", encoding="utf-8", errors="ignore") as s1, \
+                             open(f2.path, "r", encoding="utf-8", errors="ignore") as s2:
+                            r = difflib.SequenceMatcher(None, s1.read(), s2.read()).quick_ratio()
+                            if r > highest_ratio:
+                                highest_ratio = r
+                                clone_pair = (f1.relative_path, f2.relative_path)
+                    except: pass
+    if clone_pair and highest_ratio > 0.7:
+        data.clone_exposer = f"{clone_pair[0]} & {clone_pair[1]} ({int(highest_ratio*100)}% identical)"
+    else:
+        data.clone_exposer = "No major clones detected 👏"
+
     data.score = calculate_score(data, args.large_file_lines)
 
     exit_code = 0
