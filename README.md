@@ -11,13 +11,15 @@ RepoDoctor is a production-quality CLI tool that analyzes a software repository 
 ## Features
 - **Zero Runtime Dependencies**: Built entirely with Python's standard library.
 - **Single-File Portability**: Can be compiled into a single `repodoctor_single.py` script for extreme portability.
+- **Developer Mood Analyzer**: Scans code comments and commit messages to calculate the emotional state of the project team.
+- **Code Clone Exposer**: Mathematically cross-references all files to expose the two most identical copy-pasted files in the project.
+- **Micro-Linter Engine**: Instantly flags 13+ code smells including trailing whitespace, missing EOF newlines, swallowed errors, and missing alt-text.
 - **LLM Prompt Exporter**: Instantly bundle your entire codebase into a single text file ready for ChatGPT/Claude (`--export-prompt`).
 - **SVG Badge Generator**: Generate valid GitHub-style SVG health badges without image processing libraries (`--badge`).
 - **Terminal ASCII Tree & Bar Charts**: Visual breakdown of your project's folders (`--tree`) and languages natively in your terminal.
 - **AST Cyclomatic Complexity**: Parses Python Abstract Syntax Trees mathematically to score code logic complexity.
 - **Security Scanner**: Detects exposed API keys, credentials, and `.env` files and automatically redacts findings.
 - **Git Analytics & Hotspots**: Leverages native Git to report top contributors, uncommitted changes, and your most frequently edited file (Hotspot).
-- **Micro-Linter Engine**: Instantly flags 13+ code smells including trailing whitespace, missing EOF newlines, swallowed errors, and missing alt-text.
 - **Codebase Vocabulary Cloud**: Automatically extracts the most frequently used variable and function names across all your files.
 - **Rich Output Formats**: Choose between Animated ANSI-colored terminal, HTML (`--html`), or JSON (`--json`).
 - **Baseline Tracking**: Compare current scans against past reports (`--baseline`) to track regressions over time.
