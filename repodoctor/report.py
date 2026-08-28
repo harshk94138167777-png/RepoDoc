@@ -2,10 +2,18 @@ import json
 import sys
 from .models import ReportData
 
-def print_terminal_report(data: ReportData, use_color: bool = True, large_file_threshold: int = 500) -> None:
+from typing import Dict, Optional
+
+def print_terminal_report(data: ReportData, use_color: bool = True, large_file_threshold: int = 500, deltas: Optional[Dict[str, int]] = None) -> None:
     def c(text: str, color_code: str) -> str:
         if not use_color: return text
         return f"\033[{color_code}m{text}\033[0m"
+
+    def fmt_delta(val: int, inverted: bool = False) -> str:
+        if val == 0: return ""
+        sign = "+" if val > 0 else ""
+        color = "92" if (val > 0 and not inverted) or (val < 0 and inverted) else "91"
+        return c(f" ({sign}{val})", color)
 
     print(c("╔════════════════════════════════════════════════════════════╗", "94"))
     print(c("║                       REPO DOCTOR                         ║", "94;1"))
@@ -13,34 +21,48 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
     print()
     print(f"Repository: {data.name}")
     print(f"Path: {data.path}")
+    if deltas:
+        print(c("Baseline comparison activated.", "36"))
     print()
 
     print(c("SUMMARY", "1"))
     print("────────────────────────────────────────────────────────────")
-    print(f"Files scanned:          {len(data.files)}")
+    
+    files_str = f"{len(data.files)}{fmt_delta(deltas['files']) if deltas else ''}"
+    print(f"Files scanned:          {files_str}")
+    
     total_lines = sum(f.lines for f in data.files)
-    print(f"Lines of code:          {total_lines:,}")
+    lines_str = f"{total_lines:,}{fmt_delta(deltas['lines']) if deltas else ''}"
+    print(f"Lines of code:          {lines_str}")
+    
     languages = set(f.language for f in data.files if f.language != "Unknown")
     print(f"Languages detected:     {', '.join(languages) if languages else 'None'}")
+    
     if data.score:
-        print(f"Health score:           {data.score.score}/100")
+        score_str = f"{data.score.score}/100{fmt_delta(deltas['score']) if deltas else ''}"
+        print(f"Health score:           {score_str}")
     print()
 
     print(c("MAINTAINABILITY", "1"))
     print("────────────────────────────────────────────────────────────")
     large_files = sum(1 for f in data.files if f.lines > large_file_threshold)
     print(f"Large files:            {large_files}")
-    long_functions = sum(f.metrics.num_functions for f in data.files if f.metrics) # Placeholder for now
+    long_functions = sum(f.metrics.num_functions for f in data.files if f.metrics)
     print(f"Long functions:         {long_functions}")
     high_nesting = sum(1 for f in data.files if f.metrics and f.metrics.max_nesting > 4)
     print(f"High nesting:           {high_nesting}")
-    print(f"TODO/FIXME items:       {len(data.todos)}")
-    print(f"Duplicate blocks:       {len(data.duplicates)}")
+    
+    todos_str = f"{len(data.todos)}{fmt_delta(deltas['todos'], inverted=True) if deltas else ''}"
+    print(f"TODO/FIXME items:       {todos_str}")
+    
+    dups_str = f"{len(data.duplicates)}{fmt_delta(deltas['duplicates'], inverted=True) if deltas else ''}"
+    print(f"Duplicate blocks:       {dups_str}")
     print()
 
     print(c("SECURITY", "1"))
     print("────────────────────────────────────────────────────────────")
-    print(f"Potential secrets:      {len(data.security)}")
+    sec_str = f"{len(data.security)}{fmt_delta(deltas['secrets'], inverted=True) if deltas else ''}"
+    print(f"Potential secrets:      {sec_str}")
     if data.security:
         for sec in data.security:
             print(f"  {sec.filepath}:{sec.line_number} - {sec.category} (Confidence: {sec.confidence})")

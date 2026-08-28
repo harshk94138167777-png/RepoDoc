@@ -19,6 +19,7 @@ from .structure import check_project_structure
 from .git import get_git_info
 from .scoring import calculate_score
 from .report import print_terminal_report, get_json_report, generate_html_report
+from .baseline import compare_baseline
 from .models import ReportData
 
 def main():
@@ -62,6 +63,10 @@ def main():
     if len(security) > 0 or len(duplicates) > 0:
         exit_code = 1
 
+    deltas = None
+    if args.baseline:
+        deltas = compare_baseline(data, args.baseline)
+
     if args.json:
         print(get_json_report(data, args.large_file_lines))
     elif args.html:
@@ -75,9 +80,10 @@ def main():
     else:
         # Check if stdout is TTY for color
         use_color = not args.no_color and sys.stdout.isatty()
-        print_terminal_report(data, use_color, args.large_file_lines)
+        print_terminal_report(data, use_color, args.large_file_lines, deltas)
 
     sys.exit(exit_code)
+
 
 if __name__ == "__main__":
     main()
