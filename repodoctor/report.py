@@ -16,16 +16,27 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
         color = "92" if (val > 0 and not inverted) or (val < 0 and inverted) else "91"
         return c(f" ({sign}{val})", color)
 
-    banner = [
-        ("╔════════════════════════════════════════════════════════════╗", "94"),
-        ("║                        REPO DOCTOR                         ║", "94;1"),
-        ("╚════════════════════════════════════════════════════════════╝", "94")
-    ]
+    # Animated Banner
+    banner_top = "╔════════════════════════════════════════════════════════════╗"
+    banner_bottom = "╚════════════════════════════════════════════════════════════╝"
     
-    for line, color in banner:
-        print(c(line, color))
-        time.sleep(0.15)
+    print(c(banner_top, "94"))
+    
+    color_start = "\033[94;1m" if use_color else ""
+    color_end = "\033[0m" if use_color else ""
+    
+    sys.stdout.write(color_start + "║                        ")
+    sys.stdout.flush()
+    
+    for char in "REPO DOCTOR":
+        sys.stdout.write(char)
+        sys.stdout.flush()
+        time.sleep(0.05)
         
+    sys.stdout.write("                         ║" + color_end + "\n")
+    sys.stdout.flush()
+    
+    print(c(banner_bottom, "94"))
     print()
     print(f"Repository: {data.name}")
     print(f"Path: {data.path}")
