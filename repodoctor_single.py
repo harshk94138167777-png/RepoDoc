@@ -647,7 +647,7 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
         return c(f" ({sign}{val})", color)
 
     print(c("╔════════════════════════════════════════════════════════════╗", "94"))
-    print(c("║                       REPO DOCTOR                         ║", "94;1"))
+    print(c("║                        REPO DOCTOR                         ║", "94;1"))
     print(c("╚════════════════════════════════════════════════════════════╝", "94"))
     print()
     print(f"Repository: {data.name}")
