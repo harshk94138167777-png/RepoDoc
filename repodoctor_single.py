@@ -711,7 +711,21 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
     print(f"Lines of code:          {lines_str}")
     
     languages = set(f.language for f in data.files if f.language != "Unknown")
-    print(f"Languages detected:     {', '.join(languages) if languages else 'None'}")
+    lang_lines = {}
+    for f in data.files:
+        if f.language != "Unknown":
+            lang_lines[f.language] = lang_lines.get(f.language, 0) + f.lines
+            
+    total_lang_lines = sum(lang_lines.values())
+    if total_lang_lines > 0:
+        print(f"Languages detected:")
+        for lang, llines in sorted(lang_lines.items(), key=lambda x: x[1], reverse=True):
+            pct = (llines / total_lang_lines) * 100
+            bar_len = int(pct / 5)
+            bar = "█" * bar_len
+            print(f"  {lang:<12} {bar} {pct:.1f}%")
+    else:
+        print(f"Languages detected:     None")
     
     if data.score:
         score_str = f"{data.score.score}/100{fmt_delta(deltas['score']) if deltas else ''}"
@@ -771,6 +785,10 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
             sign = "+" if change > 0 else ""
             print(f"{reason:<30} {sign}{change}")
 
+
+    if exec_time is not None:
+        print(c(f"\n⚡ Scan completed in {exec_time:.2f} seconds", "90"))
+        
 def get_json_report(data: ReportData, large_file_threshold: int = 500) -> str:
     total_lines = sum(f.lines for f in data.files)
     large_files = sum(1 for f in data.files if f.lines > large_file_threshold)
