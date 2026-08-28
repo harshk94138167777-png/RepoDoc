@@ -85,6 +85,9 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
         print(c("Baseline comparison activated.", "36"))
     print()
 
+    if show_tree:
+        print_project_tree(data, c)
+
     print(c("SUMMARY", "1"))
     print("────────────────────────────────────────────────────────────")
     
@@ -131,6 +134,9 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
     
     dups_str = f"{len(data.duplicates)}{fmt_delta(deltas['duplicates'], inverted=True) if deltas else ''}"
     print(f"Duplicate blocks:       {dups_str}")
+    if data.top_words:
+        words_str = ", ".join([f"{w} ({c})" for w, c in data.top_words])
+        print(f"Top vocabulary:         {words_str}")
 
     sorted_files = sorted(data.files, key=lambda f: f.lines, reverse=True)
     if sorted_files and sorted_files[0].lines > 0:
@@ -165,6 +171,8 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
         print(f"Commits:                {data.git.commits}")
         if data.git.top_contributor:
             print(f"Top Contributor:        {data.git.top_contributor}")
+        if data.git.hotspot:
+            print(f"🔥 Hotspot file:        {data.git.hotspot}")
     else:
         print("Git repository:         Not available")
     print()

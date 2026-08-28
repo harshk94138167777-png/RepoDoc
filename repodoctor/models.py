@@ -16,6 +16,7 @@ class ReportData:
     duplicates: List['DuplicateBlock']
     structure: Dict[str, str]
     git: 'GitInfo'
+    top_words: List[Tuple[str, int]] = None
     score: Optional[HealthScore] = None
 
 @dataclass
@@ -25,6 +26,7 @@ class GitInfo:
     uncommitted_changes: int = 0
     commits: int = 0
     top_contributor: str = ""
+    hotspot: str = ""
 
 @dataclass
 class DuplicateBlock:

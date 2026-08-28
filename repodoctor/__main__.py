@@ -59,6 +59,20 @@ def main():
         git=git_info
     )
 
+    import re
+    from collections import Counter
+    word_counter = Counter()
+    for file_info in data.files:
+        if file_info.language != "Unknown":
+            try:
+                with open(file_info.path, "r", encoding="utf-8", errors="ignore") as src:
+                    words = re.findall(r'\b[A-Za-z_][A-Za-z0-9_]*\b', src.read())
+                    words = [w for w in words if len(w) > 3 and w.lower() not in {"this", "that", "with", "from", "import", "return", "class", "function", "const", "let", "var", "true", "false", "null", "none", "self", "def", "async", "await"}]
+                    word_counter.update(words)
+            except Exception:
+                pass
+    data.top_words = word_counter.most_common(5)
+
     data.score = calculate_score(data, args.large_file_lines)
 
     exit_code = 0
@@ -95,7 +109,8 @@ def main():
             
     if args.json:
         print(get_json_report(data, args.large_file_lines))
-    elif args.export_prompt:
+    
+    if args.export_prompt:
         try:
             with open(args.export_prompt, "w", encoding="utf-8") as f:
                 f.write(f"Repository: {data.name}\n")
@@ -112,7 +127,8 @@ def main():
         except Exception as e:
             print(f"Failed to export LLM prompt: {e}")
             sys.exit(3)
-    elif args.html:
+            
+    if args.html:
         try:
             with open(args.html, "w", encoding="utf-8") as f:
                 f.write(generate_html_report(data, args.large_file_lines))
@@ -120,7 +136,8 @@ def main():
         except Exception as e:
             print(f"Failed to write HTML report: {e}")
             sys.exit(3)
-    else:
+            
+    if not args.json:
         # Check if stdout is TTY for color
         use_color = not args.no_color and sys.stdout.isatty()
         exec_time = time.time() - start_time

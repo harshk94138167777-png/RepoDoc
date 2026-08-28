@@ -40,6 +40,7 @@ class ReportData:
     duplicates: List['DuplicateBlock']
     structure: Dict[str, str]
     git: 'GitInfo'
+    top_words: List[Tuple[str, int]] = None
     score: Optional[HealthScore] = None
 
 @dataclass
@@ -49,6 +50,7 @@ class GitInfo:
     uncommitted_changes: int = 0
     commits: int = 0
     top_contributor: str = ""
+    hotspot: str = ""
 
 @dataclass
 class DuplicateBlock:
@@ -557,32 +559,41 @@ def run_git(cmd: list, cwd: str) -> str:
 def get_git_info(root_path: str) -> GitInfo:
     root = os.path.abspath(root_path)
     
-    # Simple check if git exists and it's a git repo
     is_git_repo = run_git(["rev-parse", "--is-inside-work-tree"], root)
     if is_git_repo != "true":
         return GitInfo(available=False)
 
     branch = run_git(["branch", "--show-current"], root)
     if not branch:
-        # maybe detached head
         branch = "detached"
 
-    # Count commits
     commits_str = run_git(["rev-list", "--count", "HEAD"], root)
     commits = int(commits_str) if commits_str.isdigit() else 0
 
-    # Count uncommitted changes
     status_str = run_git(["status", "--porcelain"], root)
     uncommitted = len(status_str.splitlines()) if status_str else 0
 
     top_contributor = ""
     try:
         result = subprocess.run(["git", "shortlog", "-sn", "HEAD"], cwd=root, capture_output=True, text=True, check=True)
-        lines = result.stdout.strip().split('\n')
+        lines = result.stdout.splitlines()
         if lines and lines[0]:
             parts = lines[0].strip().split('\t', 1)
             if len(parts) == 2:
                 top_contributor = f"{parts[1].strip()} ({parts[0].strip()} commits)"
+    except Exception:
+        pass
+
+    hotspot = ""
+    try:
+        result = subprocess.run(["git", "log", "--name-only", "--pretty=format:"], cwd=root, capture_output=True, text=True, check=True)
+        files = [f for f in result.stdout.split('\n') if f.strip()]
+        if files:
+            from collections import Counter
+            c = Counter(files)
+            most_common = c.most_common(1)
+            if most_common:
+                hotspot = f"{most_common[0][0]} ({most_common[0][1]} edits)"
     except Exception:
         pass
 
@@ -591,7 +602,8 @@ def get_git_info(root_path: str) -> GitInfo:
         branch=branch,
         uncommitted_changes=uncommitted,
         commits=commits,
-        top_contributor=top_contributor
+        top_contributor=top_contributor,
+        hotspot=hotspot
     )
 
 
@@ -731,6 +743,9 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
         print(c("Baseline comparison activated.", "36"))
     print()
 
+    if show_tree:
+        print_project_tree(data, c)
+
     print(c("SUMMARY", "1"))
     print("────────────────────────────────────────────────────────────")
     
@@ -777,6 +792,9 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
     
     dups_str = f"{len(data.duplicates)}{fmt_delta(deltas['duplicates'], inverted=True) if deltas else ''}"
     print(f"Duplicate blocks:       {dups_str}")
+    if data.top_words:
+        words_str = ", ".join([f"{w} ({c})" for w, c in data.top_words])
+        print(f"Top vocabulary:         {words_str}")
 
     sorted_files = sorted(data.files, key=lambda f: f.lines, reverse=True)
     if sorted_files and sorted_files[0].lines > 0:
@@ -811,6 +829,8 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
         print(f"Commits:                {data.git.commits}")
         if data.git.top_contributor:
             print(f"Top Contributor:        {data.git.top_contributor}")
+        if data.git.hotspot:
+            print(f"🔥 Hotspot file:        {data.git.hotspot}")
     else:
         print("Git repository:         Not available")
     print()
@@ -1029,6 +1049,20 @@ def main():
         git=git_info
     )
 
+    import re
+    from collections import Counter
+    word_counter = Counter()
+    for file_info in data.files:
+        if file_info.language != "Unknown":
+            try:
+                with open(file_info.path, "r", encoding="utf-8", errors="ignore") as src:
+                    words = re.findall(r'\b[A-Za-z_][A-Za-z0-9_]*\b', src.read())
+                    words = [w for w in words if len(w) > 3 and w.lower() not in {"this", "that", "with", "from", "import", "return", "class", "function", "const", "let", "var", "true", "false", "null", "none", "self", "def", "async", "await"}]
+                    word_counter.update(words)
+            except Exception:
+                pass
+    data.top_words = word_counter.most_common(5)
+
     data.score = calculate_score(data, args.large_file_lines)
 
     exit_code = 0
@@ -1065,7 +1099,8 @@ def main():
             
     if args.json:
         print(get_json_report(data, args.large_file_lines))
-    elif args.export_prompt:
+    
+    if args.export_prompt:
         try:
             with open(args.export_prompt, "w", encoding="utf-8") as f:
                 f.write(f"Repository: {data.name}\n")
@@ -1082,7 +1117,8 @@ def main():
         except Exception as e:
             print(f"Failed to export LLM prompt: {e}")
             sys.exit(3)
-    elif args.html:
+            
+    if args.html:
         try:
             with open(args.html, "w", encoding="utf-8") as f:
                 f.write(generate_html_report(data, args.large_file_lines))
@@ -1090,7 +1126,8 @@ def main():
         except Exception as e:
             print(f"Failed to write HTML report: {e}")
             sys.exit(3)
-    else:
+            
+    if not args.json:
         # Check if stdout is TTY for color
         use_color = not args.no_color and sys.stdout.isatty()
         exec_time = time.time() - start_time
