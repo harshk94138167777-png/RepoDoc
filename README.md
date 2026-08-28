@@ -12,11 +12,12 @@ RepoDoctor is a production-quality CLI tool that analyzes a software repository 
 - **Zero Runtime Dependencies**: Built entirely with Python's standard library.
 - **Single-File Portability**: Can be compiled into a single `repodoctor_single.py` script for extreme portability.
 - **LLM Prompt Exporter**: Instantly bundle your entire codebase into a single text file ready for ChatGPT/Claude (`--export-prompt`).
-- **Terminal Bar Charts**: Visual breakdown of your repository's languages natively in your terminal.
+- **SVG Badge Generator**: Generate valid GitHub-style SVG health badges without image processing libraries (`--badge`).
+- **Terminal ASCII Tree & Bar Charts**: Visual breakdown of your project's folders (`--tree`) and languages natively in your terminal.
+- **AST Cyclomatic Complexity**: Parses Python Abstract Syntax Trees mathematically to score code logic complexity.
 - **Security Scanner**: Detects exposed API keys, credentials, and `.env` files and automatically redacts findings.
-- **Maintainability Metrics**: Identifies complex code, huge files, excessive nesting, and tracks a "Heaviest Files" leaderboard.
-- **Duplicate Code Detection**: Finds duplicated logical blocks across the codebase using rolling hashes.
-- **Git Top Contributor Analytics**: Leverages native Git to report top contributors, commit counts, and uncommitted changes.
+- **Git Analytics & Hotspots**: Leverages native Git to report top contributors, uncommitted changes, and your most frequently edited file (Hotspot).
+- **Codebase Vocabulary Cloud**: Automatically extracts the most frequently used variable and function names across all your files.
 - **Rich Output Formats**: Choose between Animated ANSI-colored terminal, HTML (`--html`), or JSON (`--json`).
 - **Baseline Tracking**: Compare current scans against past reports (`--baseline`) to track regressions over time.
 
@@ -45,6 +46,8 @@ python -m repodoctor /path/to/your/repo
 | `--json` | Output valid machine-readable JSON |
 | `--html FILE` | Output a self-contained HTML dashboard report |
 | `--export-prompt FILE`| Export the codebase into a single text file for LLM prompting |
+| `--badge FILE` | Generate a GitHub-style SVG health badge |
+| `--tree` | Print an ASCII project directory tree at the top of the report |
 | `--baseline FILE` | Path to a previous JSON report to calculate delta trends |
 | `--no-color` | Disable animated ANSI color output |
 | `--ignore` | Comma-separated list of custom directories to ignore |
