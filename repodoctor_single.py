@@ -656,7 +656,14 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
     color_start = "\033[94;1m" if use_color else ""
     color_end = "\033[0m" if use_color else ""
     
-    sys.stdout.write(color_start + "║                        ")
+    # Draw the empty middle section first, then carriage return to the start
+    empty_mid = "║" + " " * 60 + "║"
+    sys.stdout.write(color_start + empty_mid + "\r")
+    sys.stdout.flush()
+    time.sleep(0.1)
+    
+    # Overwrite the left side and type the letters
+    sys.stdout.write("║" + " " * 24)
     sys.stdout.flush()
     
     for char in "REPO DOCTOR":
@@ -664,7 +671,7 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
         sys.stdout.flush()
         time.sleep(0.05)
         
-    sys.stdout.write("                         ║" + color_end + "\n")
+    sys.stdout.write(color_end + "\n")
     sys.stdout.flush()
     
     print(c(banner_bottom, "94"))
