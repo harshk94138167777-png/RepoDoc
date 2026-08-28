@@ -79,8 +79,8 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
         for lang, llines in sorted(lang_lines.items(), key=lambda x: x[1], reverse=True):
             pct = (llines / total_lang_lines) * 100
             bar_len = int(pct / 5)
-            bar = "█" * bar_len
-            print(f"  {lang:<12} {bar} {pct:.1f}%")
+            bar = "█ " * bar_len
+            print(f"  {lang:<18} {bar}{pct:.1f}%\n")
     else:
         print(f"Languages detected:     None")
     
