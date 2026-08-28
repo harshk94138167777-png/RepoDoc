@@ -1,5 +1,6 @@
 import json
 import sys
+import time
 from .models import ReportData
 
 from typing import Dict, Optional
@@ -15,9 +16,16 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
         color = "92" if (val > 0 and not inverted) or (val < 0 and inverted) else "91"
         return c(f" ({sign}{val})", color)
 
-    print(c("╔════════════════════════════════════════════════════════════╗", "94"))
-    print(c("║                        REPO DOCTOR                         ║", "94;1"))
-    print(c("╚════════════════════════════════════════════════════════════╝", "94"))
+    banner = [
+        ("╔════════════════════════════════════════════════════════════╗", "94"),
+        ("║                        REPO DOCTOR                         ║", "94;1"),
+        ("╚════════════════════════════════════════════════════════════╝", "94")
+    ]
+    
+    for line, color in banner:
+        print(c(line, color))
+        time.sleep(0.15)
+        
     print()
     print(f"Repository: {data.name}")
     print(f"Path: {data.path}")
