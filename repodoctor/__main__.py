@@ -71,6 +71,23 @@ def main():
 
     if args.json:
         print(get_json_report(data, args.large_file_lines))
+    elif args.export_prompt:
+        try:
+            with open(args.export_prompt, "w", encoding="utf-8") as f:
+                f.write(f"Repository: {data.name}\n")
+                f.write("="*80 + "\n\n")
+                for file_info in data.files:
+                    if file_info.language != "Unknown" and file_info.lines < args.large_file_lines:
+                        f.write(f"--- FILE: {file_info.relative_path} ---\n")
+                        try:
+                            with open(file_info.path, "r", encoding="utf-8", errors="ignore") as src:
+                                f.write(src.read() + "\n\n")
+                        except Exception:
+                            f.write("[Error reading file contents]\n\n")
+            print(f"LLM prompt successfully exported to {args.export_prompt}")
+        except Exception as e:
+            print(f"Failed to export LLM prompt: {e}")
+            sys.exit(3)
     elif args.html:
         try:
             with open(args.html, "w", encoding="utf-8") as f:
