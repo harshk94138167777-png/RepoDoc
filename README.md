@@ -10,14 +10,15 @@ RepoDoctor is a production-quality CLI tool that analyzes a software repository 
 
 ## Features
 - **Zero Runtime Dependencies**: Built entirely with Python's standard library.
-- **Repository Scanning**: Fast filesystem traversal with configurable ignores.
-- **Security Scanner**: Detects exposed API keys, credentials, and `.env` files using robust heuristics and automatically redact findings.
-- **Maintainability Metrics**: Identifies complex code, huge files, excessive nesting, and counts lines and functions.
+- **Single-File Portability**: Can be compiled into a single `repodoctor_single.py` script for extreme portability.
+- **LLM Prompt Exporter**: Instantly bundle your entire codebase into a single text file ready for ChatGPT/Claude (`--export-prompt`).
+- **Terminal Bar Charts**: Visual breakdown of your repository's languages natively in your terminal.
+- **Security Scanner**: Detects exposed API keys, credentials, and `.env` files and automatically redacts findings.
+- **Maintainability Metrics**: Identifies complex code, huge files, excessive nesting, and tracks a "Heaviest Files" leaderboard.
 - **Duplicate Code Detection**: Finds duplicated logical blocks across the codebase using rolling hashes.
-- **Project Structure Validation**: Enforces standard repository practices (README, tests, gitignore, CI config).
-- **Git Integration**: Leverages native Git to report branch, commit counts, and uncommitted changes.
-- **Rich Terminal Output**: ANSI-colored reporting without external rendering packages like Rich or Colorama.
-- **JSON Output**: Machine-readable output via `--json`.
+- **Git Top Contributor Analytics**: Leverages native Git to report top contributors, commit counts, and uncommitted changes.
+- **Rich Output Formats**: Choose between Animated ANSI-colored terminal, HTML (`--html`), or JSON (`--json`).
+- **Baseline Tracking**: Compare current scans against past reports (`--baseline`) to track regressions over time.
 
 ## Architecture
 Modular Python architecture utilizing built-in `argparse`, `subprocess`, `ast`, and `unittest`. Data structures rely on `dataclasses`.
@@ -42,12 +43,15 @@ python -m repodoctor /path/to/your/repo
 |---|---|
 | `path` | Path to the repository (default: `.`) |
 | `--json` | Output valid machine-readable JSON |
-| `--no-color` | Disable ANSI color output |
+| `--html FILE` | Output a self-contained HTML dashboard report |
+| `--export-prompt FILE`| Export the codebase into a single text file for LLM prompting |
+| `--baseline FILE` | Path to a previous JSON report to calculate delta trends |
+| `--no-color` | Disable animated ANSI color output |
 | `--ignore` | Comma-separated list of custom directories to ignore |
 | `--large-file-lines` | Threshold for large file lines (default: 500) |
 | `--duplicate-lines` | Minimum lines for duplicate detection (default: 8) |
-| `--security` | Focus only on security analysis (WIP) |
-| `--todos` | Focus only on TODO/FIXME analysis (WIP) |
+| `--security` | Focus only on security analysis |
+| `--todos` | Focus only on TODO/FIXME analysis |
 | `--git` | Include Git analysis (Always attempts by default) |
 | `--verbose` | Enable verbose logging |
 | `--version` | Display version |
