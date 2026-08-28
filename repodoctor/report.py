@@ -189,6 +189,7 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
     if data.score:
         print("────────────────────────────────────────────────────────────")
         print(c(f"Health Score: {data.score.score}/100", "92;1" if data.score.score > 80 else "91;1"))
+        print(c("Guide: 90+ (Excellent) | 70-89 (Good) | <70 (Needs Work)", "36"))
         print("────────────────────────────────────────────────────────────")
         for reason, change in data.score.breakdown:
             sign = "+" if change > 0 else ""
