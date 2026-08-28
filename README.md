@@ -13,7 +13,7 @@ RepoDoctor is a production-quality CLI tool that analyzes a software repository 
 - **Single-File Portability**: Can be compiled into a single `repodoctor_single.py` script for extreme portability.
 - **Developer Mood Analyzer**: Scans code comments and commit messages to calculate the emotional state of the project team.
 - **Code Clone Exposer**: Mathematically cross-references all files to expose the two most identical copy-pasted files in the project.
-- **Micro-Linter Engine**: Instantly flags 13+ code smells including trailing whitespace, missing EOF newlines, swallowed errors, and missing alt-text.
+- **Micro-Linter Engine**: Instantly flags 30+ code smells including profanity filters, wildcard imports, massive JSON configs, and missing alt-text.
 - **LLM Prompt Exporter**: Instantly bundle your entire codebase into a single text file ready for ChatGPT/Claude (`--export-prompt`).
 - **SVG Badge Generator**: Generate valid GitHub-style SVG health badges without image processing libraries (`--badge`).
 - **Terminal ASCII Tree & Bar Charts**: Visual breakdown of your project's folders (`--tree`) and languages natively in your terminal.
