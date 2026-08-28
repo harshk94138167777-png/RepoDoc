@@ -246,66 +246,126 @@ def generate_html_report(data: ReportData, large_file_threshold: int = 500) -> s
     large_files = sum(1 for f in data.files if f.lines > large_file_threshold)
     long_functions = sum(f.metrics.num_functions for f in data.files if f.metrics)
     high_nesting = sum(1 for f in data.files if f.metrics and f.metrics.max_nesting > 4)
-    languages = set(f.language for f in data.files if f.language != "Unknown")
+    total_smells = sum(len(f.code_smells) for f in data.files if f.code_smells)
 
-    html = f"""<!DOCTYPE html>
-<html>
+    html = f'''<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<title>RepoDoctor Report - {data.name}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RepoDoctor Dashboard - {data.name}</title>
 <style>
-    body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f6f8fa; color: #24292f; margin: 0; padding: 20px; }}
-    .container {{ max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }}
-    h1 {{ border-bottom: 1px solid #eaecef; padding-bottom: 10px; }}
-    h2 {{ margin-top: 30px; border-bottom: 1px solid #eaecef; padding-bottom: 5px; color: #0969da; }}
-    .stats-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }}
-    .stat-card {{ background: #f6f8fa; padding: 15px; border-radius: 6px; border: 1px solid #d0d7de; text-align: center; }}
-    .stat-value {{ font-size: 24px; font-weight: bold; color: #24292f; }}
-    .stat-label {{ font-size: 14px; color: #57606a; margin-top: 5px; }}
-    .score {{ font-size: 48px; font-weight: bold; text-align: center; margin: 20px 0; color: { '#2da44e' if (data.score and data.score.score > 80) else '#cf222e' }; }}
-    table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
-    th, td {{ padding: 8px 12px; border: 1px solid #d0d7de; text-align: left; }}
-    th {{ background: #f6f8fa; }}
-    .pass {{ color: #2da44e; font-weight: bold; }}
-    .warn {{ color: #bf8700; font-weight: bold; }}
-    .fail {{ color: #cf222e; font-weight: bold; }}
+    :root {{
+        --bg-main: #0f172a;
+        --bg-card: #1e293b;
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --accent: #3b82f6;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --border: #334155;
+    }}
+    body {{
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background-color: var(--bg-main);
+        color: var(--text-main);
+        margin: 0;
+        padding: 40px 20px;
+        line-height: 1.6;
+    }}
+    .container {{ max-width: 1100px; margin: 0 auto; }}
+    .header {{ text-align: center; margin-bottom: 40px; }}
+    .header h1 {{
+        font-size: 2.8rem;
+        margin-bottom: 10px;
+        background: -webkit-linear-gradient(45deg, #60a5fa, #c084fc);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }}
+    .score-container {{ display: flex; justify-content: center; margin: 30px 0 40px 0; }}
+    .score-circle {{
+        width: 160px; height: 160px; border-radius: 50%;
+        background: var(--bg-card);
+        border: 4px solid { '#10b981' if (data.score and data.score.score >= 80) else ('#f59e0b' if (data.score and data.score.score >= 50) else '#ef4444') };
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        box-shadow: 0 0 30px { 'rgba(16,185,129,0.3)' if (data.score and data.score.score >= 80) else ('rgba(245,158,11,0.3)' if (data.score and data.score.score >= 50) else 'rgba(239,68,68,0.3)') };
+    }}
+    .score-circle span.num {{ font-size: 54px; font-weight: 800; line-height: 1; }}
+    .score-circle span.lbl {{ font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-top: 5px; }}
+    .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px; }}
+    .card {{
+        background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+        padding: 25px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); transition: transform 0.2s;
+    }}
+    .card:hover {{ transform: translateY(-5px); border-color: var(--accent); }}
+    .card h3 {{ margin: 0 0 10px 0; font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }}
+    .card .val {{ font-size: 32px; font-weight: 700; }}
+    .section {{ background: var(--bg-card); border-radius: 12px; padding: 30px; margin-bottom: 25px; border: 1px solid var(--border); }}
+    .section h2 {{ margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 15px; color: var(--accent); font-size: 20px; }}
+    ul.feature-list {{ list-style: none; padding: 0; margin: 0; }}
+    ul.feature-list li {{ padding: 12px 0; border-bottom: 1px dashed var(--border); display: flex; justify-content: space-between; }}
+    ul.feature-list li:last-child {{ border-bottom: none; padding-bottom: 0; }}
+    table {{ width: 100%; border-collapse: collapse; margin-top: 15px; }}
+    th, td {{ padding: 12px 15px; border-bottom: 1px solid var(--border); text-align: left; }}
+    th {{ font-weight: 600; color: var(--text-muted); text-transform: uppercase; font-size: 12px; }}
+    .badge {{ padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; text-transform: uppercase; }}
+    .badge.pass {{ background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }}
+    .badge.warn {{ background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }}
+    .badge.fail {{ background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }}
 </style>
 </head>
 <body>
 <div class="container">
-    <h1>RepoDoctor Report: {data.name}</h1>
-    <div class="score">{data.score.score if data.score else 'N/A'}<span style="font-size:24px;color:#57606a">/100</span></div>
-    
-    <h2>Summary</h2>
-    <div class="stats-grid">
-        <div class="stat-card"><div class="stat-value">{len(data.files)}</div><div class="stat-label">Files Scanned</div></div>
-        <div class="stat-card"><div class="stat-value">{total_lines:,}</div><div class="stat-label">Lines of Code</div></div>
-        <div class="stat-card"><div class="stat-value">{len(data.todos)}</div><div class="stat-label">TODO/FIXME Items</div></div>
-        <div class="stat-card"><div class="stat-value">{len(data.duplicates)}</div><div class="stat-label">Duplicate Blocks</div></div>
-        <div class="stat-card"><div class="stat-value">{len(data.security)}</div><div class="stat-label">Potential Secrets</div></div>
+    <div class="header">
+        <h1>RepoDoctor Dashboard</h1>
+        <p style="color: var(--text-muted); font-family: monospace; background: rgba(0,0,0,0.3); padding: 5px 15px; border-radius: 20px; display: inline-block;">Target: {data.path}</p>
     </div>
     
-    <h2>Maintainability</h2>
-    <ul>
-        <li><b>Large Files:</b> {large_files}</li>
-        <li><b>Long Functions (Heuristic):</b> {long_functions}</li>
-        <li><b>High Nesting:</b> {high_nesting}</li>
-        <li><b>Languages:</b> {', '.join(languages) if languages else 'None'}</li>
-    </ul>
-
-    <h2>Project Health</h2>
-    <table>
-        <tr><th>Check</th><th>Status</th></tr>
-        {''.join(f"<tr><td>{k}</td><td class='{v.lower()}'>{v}</td></tr>" for k, v in data.structure.items())}
-    </table>
-
-    <h2>Security Findings</h2>
-    { "<ul>" + "".join(f"<li><b>{s.filepath}:{s.line_number}</b> - {s.category} (Value: {s.redacted_value})</li>" for s in data.security) + "</ul>" if data.security else "<p>No secrets detected.</p>" }
+    <div class="score-container">
+        <div class="score-circle">
+            <span class="num">{data.score.score if data.score else 'N/A'}</span>
+            <span class="lbl">Health</span>
+        </div>
+    </div>
     
-    <h2>Git Info</h2>
-    <p>{ f"Branch: {data.git.branch} | Commits: {data.git.commits} | Uncommitted Changes: {data.git.uncommitted_changes}" if data.git.available else "Git not available." }</p>
+    <div class="grid">
+        <div class="card"><h3>Files Scanned</h3><div class="val">{len(data.files)}</div></div>
+        <div class="card"><h3>Lines of Code</h3><div class="val">{total_lines:,}</div></div>
+        <div class="card"><h3>Security Secrets</h3><div class="val" style="color: { 'var(--danger)' if data.security else 'var(--success)' }">{len(data.security)}</div></div>
+        <div class="card"><h3>Code Smells (Linter)</h3><div class="val" style="color: { 'var(--warning)' if total_smells > 0 else 'var(--success)' }">{total_smells}</div></div>
+    </div>
+    
+    <div class="grid">
+        <div class="section" style="margin-bottom:0">
+            <h2>AI & Advanced Analytics</h2>
+            <ul class="feature-list">
+                <li><span>🎭 Developer Mood:</span> <strong>{data.mood if data.mood else 'N/A'}</strong></li>
+                <li><span>👯‍♂️ Clone Exposer:</span> <strong>{data.clone_exposer if data.clone_exposer else 'N/A'}</strong></li>
+                <li><span>🔥 Git Hotspot:</span> <strong>{data.git.hotspot if data.git.available and data.git.hotspot else "N/A"}</strong></li>
+                <li><span>👑 Top Contributor:</span> <strong>{data.git.top_contributor if data.git.available and data.git.top_contributor else "N/A"}</strong></li>
+            </ul>
+        </div>
+        <div class="section" style="margin-bottom:0">
+            <h2>Maintainability Metrics</h2>
+            <ul class="feature-list">
+                <li><span>High Nesting / Complexity:</span> <strong>{high_nesting} functions</strong></li>
+                <li><span>Duplicate Blocks:</span> <strong>{len(data.duplicates)} blocks</strong></li>
+                <li><span>TODO / FIXME:</span> <strong>{len(data.todos)} items</strong></li>
+                <li><span>Top Vocabulary:</span> <strong style="font-size:12px; color: var(--accent);">{ ', '.join(f"{w} ({c})" for w, c in data.top_words) if data.top_words else 'N/A' }</strong></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Project Structure Validation</h2>
+        <table>
+            <tr><th>Requirement</th><th>Status</th></tr>
+            {''.join(f"<tr><td>{k}</td><td><span class='badge {v.lower()}'>{v}</span></td></tr>" for k, v in data.structure.items())}
+        </table>
+    </div>
 </div>
 </body>
-</html>"""
+</html>'''
     return html
 
