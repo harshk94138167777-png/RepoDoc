@@ -121,8 +121,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "path",
         help="Path to the repository to analyze",
-        default=".",
-        nargs="?"
+        default=["."],
+        nargs="*"
     )
     parser.add_argument("--json", action="store_true", help="Output valid machine-readable JSON")
     parser.add_argument("--html", type=str, help="Output a self-contained HTML report to the specified file", default="")
@@ -1424,7 +1424,8 @@ def main():
         print()
         time.sleep(0.5)
 
-    root_path = args.path
+    root_paths = args.path
+    root_path = root_paths[0] if root_paths else '.'
     if not os.path.isdir(root_path):
         print(f"Error: {root_path} is not a directory.")
         sys.exit(2)
@@ -1472,7 +1473,7 @@ def main():
     repo_name = os.path.basename(os.path.abspath(root_path))
 
     data = ReportData(
-        path=os.path.abspath(root_path),
+        path=", ".join(os.path.abspath(rp) for rp in root_paths),
         name=repo_name,
         files=files,
         todos=todos,

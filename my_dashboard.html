@@ -127,7 +127,7 @@
 <div class="container">
     <div class="header">
         <h1>RepoDoctor Dashboard</h1>
-        <p style="color: var(--text-muted); font-family: monospace; background: rgba(0,0,0,0.3); padding: 5px 15px; border-radius: 20px; display: inline-block;">Target: D:\tEStro</p>
+        <p style="color: var(--text-muted); font-family: monospace; background: rgba(0,0,0,0.3); padding: 5px 15px; border-radius: 20px; display: inline-block;">Target: D:\tEStro, D:\Supp</p>
     </div>
     
     <div class="score-container">
@@ -173,14 +173,14 @@
         </table>
     </div>
 
-    <div class="grid">
-        <div class="section">
+    <div>
+        <div class="section" style="width: 100%; box-sizing: border-box;">
             <h2>Top 3 Heaviest Files</h2>
             <ul class="feature-list">
                 <li><span>D:\tEStro\frontend\package-lock.json</span> <strong>3,384 lines</strong></li><li><span>D:\tEStro\backend\package-lock.json</span> <strong>2,357 lines</strong></li><li><span>D:\tEStro\backend\src\utils\simulations.js</span> <strong>796 lines</strong></li>
             </ul>
         </div>
-        <div class="section" style="grid-column: 1 / -1;">
+        <div class="section" style="width: 100%; box-sizing: border-box; overflow-x: auto;">
             <h2>Security Secrets Findings</h2>
             <table>
                 <tr><th>File : Line</th><th>Category</th><th>Redacted Value</th></tr>

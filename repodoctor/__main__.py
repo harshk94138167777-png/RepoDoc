@@ -48,7 +48,8 @@ def main():
         print()
         time.sleep(0.5)
 
-    root_path = args.path
+    root_paths = args.path
+    root_path = root_paths[0] if root_paths else '.'
     if not os.path.isdir(root_path):
         print(f"Error: {root_path} is not a directory.")
         sys.exit(2)
@@ -96,7 +97,7 @@ def main():
     repo_name = os.path.basename(os.path.abspath(root_path))
 
     data = ReportData(
-        path=os.path.abspath(root_path),
+        path=", ".join(os.path.abspath(rp) for rp in root_paths),
         name=repo_name,
         files=files,
         todos=todos,

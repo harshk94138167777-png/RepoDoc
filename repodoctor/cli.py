@@ -11,8 +11,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "path",
         help="Path to the repository to analyze",
-        default=".",
-        nargs="?"
+        default=["."],
+        nargs="*"
     )
     parser.add_argument("--json", action="store_true", help="Output valid machine-readable JSON")
     parser.add_argument("--html", type=str, help="Output a self-contained HTML report to the specified file", default="")
