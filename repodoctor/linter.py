@@ -66,10 +66,10 @@ def run_micro_linters(file_info, content):
             
     elif file_info.language == "HTML":
         # 27. Inline CSS (style="...")
-        if re.search(r'\bstyle\s*=\s*["']', content):
+        if re.search(r'\bstyle\s*=\s*["\']', content):
             smells.append("Inline CSS (style=...) used")
         # 28. Inline JS (onclick="...")
-        if re.search(r'\bon(click|load|submit|mouseover|change)\s*=\s*["']', content):
+        if re.search(r'\bon(click|load|submit|mouseover|change)\s*=\s*["\']', content):
             smells.append("Inline JavaScript (onclick=...) used")
             
     elif file_info.language == "JSON":
@@ -206,10 +206,10 @@ def run_micro_linters(file_info, content):
             
     elif file_info.language == "HTML":
         # 27. Inline CSS (style="...")
-        if re.search(r'\bstyle\s*=\s*["']', content):
+        if re.search(r'\bstyle\s*=\s*["\']', content):
             smells.append("Inline CSS (style=...) used")
         # 28. Inline JS (onclick="...")
-        if re.search(r'\bon(click|load|submit|mouseover|change)\s*=\s*["']', content):
+        if re.search(r'\bon(click|load|submit|mouseover|change)\s*=\s*["\']', content):
             smells.append("Inline JavaScript (onclick=...) used")
             
     elif file_info.language == "JSON":
