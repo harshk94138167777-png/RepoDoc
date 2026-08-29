@@ -963,50 +963,6 @@ def print_project_tree(data, c_func):
     print()
 
 def print_terminal_report(data: ReportData, use_color: bool = True, large_file_threshold: int = 500, deltas: Optional[Dict[str, int]] = None, exec_time: Optional[float] = None, show_tree: bool = False) -> None:
-    def c(text: str, color_code: str) -> str:
-        if not use_color: return text
-        return f"\033[{color_code}m{text}\033[0m"
-
-    def fmt_delta(val: int, inverted: bool = False) -> str:
-        if val == 0: return ""
-        sign = "+" if val > 0 else ""
-        color = "92" if (val > 0 and not inverted) or (val < 0 and inverted) else "91"
-        return c(f" ({sign}{val})", color)
-
-    # Hide cursor
-    sys.stdout.write("\033[?25l")
-    
-    # Animated Banner
-    banner_top = "╔════════════════════════════════════════════════════════════╗"
-    banner_bottom = "╚════════════════════════════════════════════════════════════╝"
-    
-    print(c(banner_top, "94"))
-    
-    color_start = "\033[94;1m" if use_color else ""
-    color_end = "\033[0m" if use_color else ""
-    
-    # Draw the empty middle section first, then carriage return to the start
-    empty_mid = "║" + " " * 60 + "║"
-    sys.stdout.write(color_start + empty_mid + "\r")
-    sys.stdout.flush()
-    time.sleep(0.1)
-    
-    # Overwrite the left side and type the letters
-    sys.stdout.write("║" + " " * 24)
-    sys.stdout.flush()
-    
-    for char in "REPO DOCTOR":
-        sys.stdout.write(char)
-        sys.stdout.flush()
-        time.sleep(0.05)
-        
-    sys.stdout.write(color_end + "\n")
-    sys.stdout.flush()
-    
-    print(c(banner_bottom, "94"))
-    
-    # Show cursor
-    sys.stdout.write("\033[?25h")
     print()
     print(f"Repository: {data.name}")
     print(f"Path: {data.path}")
@@ -1357,6 +1313,26 @@ if sys.stdout.encoding != 'utf-8':
 def main():
     start_time = time.time()
     args = parse_args()
+
+    # 1. Print Banner & Greeting
+    use_color = not args.no_color and sys.stdout.isatty()
+    def c(text, code):
+        return f"\033[{code}m{text}\033[0m" if use_color else text
+
+    if not args.json:
+        print()
+        print(c("╔════════════════════════════════════════════════════════════╗", "94;1"))
+        print(c("║                        ", "94;1"), end="")
+        for char in "REPO DOCTOR":
+            print(c(char, "96;1"), end="")
+            sys.stdout.flush()
+            time.sleep(0.05)
+        print(c("                         ║", "94;1"))
+        print(c("╚════════════════════════════════════════════════════════════╝", "94;1"))
+        print(c("Welcome to RepoDoctor! 🩺", "92;1"))
+        print(c("Initializing zero-dependency static analysis engine...", "90;1"))
+        print()
+        time.sleep(0.5)
 
     root_path = args.path
     if not os.path.isdir(root_path):
