@@ -131,4 +131,4 @@ python -m unittest discover -s tests -v
 Built for the **Zero Dependency | 72-Hour Hackathon**.
 
 ## License
-MIT
+
