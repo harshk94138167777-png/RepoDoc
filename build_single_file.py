@@ -4,6 +4,7 @@ import re
 MODULES = [
     'models.py',
     'cli.py',
+    'spinner.py',
     'scanner.py',
     'languages.py',
     'metrics.py',

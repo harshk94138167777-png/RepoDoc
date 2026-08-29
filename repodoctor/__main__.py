@@ -22,32 +22,59 @@ from .scoring import calculate_score
 from .report import print_terminal_report, get_json_report, generate_html_report
 from .baseline import compare_baseline
 from .models import ReportData
+from .spinner import Spinner
 
 def main():
     start_time = time.time()
     args = parse_args()
-    
+
     root_path = args.path
     if not os.path.isdir(root_path):
         print(f"Error: {root_path} is not a directory.")
         sys.exit(2)
 
     custom_ignores = args.ignore.split(",") if args.ignore else []
-    
-    # Scanning
-    files = scan_repository(root_path, custom_ignores)
-    detect_languages(files)
-    analyze_metrics(files)
-    
-    todos = scan_todos(files)
-    security = scan_security(files)
-    duplicates = scan_duplicates(files, args.duplicate_lines)
-    
-    structure = check_project_structure(root_path)
-    git_info = get_git_info(root_path)
+
+    # Determine animation mode (disabled by --no-animation or when not a TTY)
+    show_animation = not getattr(args, "no_animation", False)
+    use_parallel   = getattr(args, "parallel", False)
+
+    # ------------------------------------------------------------------ #
+    # File scanning (with optional animation + parallel mode)
+    # ------------------------------------------------------------------ #
+    files = scan_repository(
+        root_path,
+        custom_ignores,
+        parallel=use_parallel,
+        show_animation=show_animation,
+    )
+
+    # ------------------------------------------------------------------ #
+    # Analysis phases — show spinner for each
+    # ------------------------------------------------------------------ #
+    with Spinner("Detecting languages", colour=show_animation):
+        detect_languages(files)
+
+    with Spinner("Analysing metrics", colour=show_animation):
+        analyze_metrics(files)
+
+    with Spinner("Scanning TODOs", colour=show_animation):
+        todos = scan_todos(files)
+
+    with Spinner("Scanning security patterns", colour=show_animation):
+        security = scan_security(files)
+
+    with Spinner("Detecting duplicates", colour=show_animation):
+        duplicates = scan_duplicates(files, args.duplicate_lines)
+
+    with Spinner("Checking project structure", colour=show_animation):
+        structure = check_project_structure(root_path)
+
+    with Spinner("Reading Git info", colour=show_animation):
+        git_info = get_git_info(root_path)
 
     repo_name = os.path.basename(os.path.abspath(root_path))
-    
+
     data = ReportData(
         path=os.path.abspath(root_path),
         name=repo_name,
@@ -198,4 +225,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
