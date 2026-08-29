@@ -10,8 +10,6 @@ RepoDoctor is a production-quality CLI tool that analyzes a software repository 
 
 ## Features
 - **Zero Runtime Dependencies**: Built entirely with Python's standard library.
-- **Parallel Repository Scanning**: Fast filesystem traversal with configurable ignores and O(N) deduplication via `concurrent.futures.ThreadPoolExecutor`.
-- **Live CLI Animation**: Zero-dependency terminal spinner and progress bar for immediate feedback.
 - **Single-File Portability**: Can be compiled into a single `repodoctor_single.py` script for extreme portability.
 - **Developer Mood Analyzer**: Scans code comments and commit messages to calculate the emotional state of the project team.
 - **Code Clone Exposer**: Mathematically cross-references all files to expose the two most identical copy-pasted files in the project.
@@ -30,25 +28,17 @@ RepoDoctor is a production-quality CLI tool that analyzes a software repository 
 Modular Python architecture utilizing built-in `argparse`, `subprocess`, `ast`, and `unittest`. Data structures rely on `dataclasses`.
 
 ## Installation
-RepoDoctor is packaged as a standard zero-dependency Python tool.
+No dependencies are required. Clone the repository or copy the `repodoctor` folder:
 
-**Option 1: Install Globally via pip (Recommended)**
 ```bash
-pip install git+https://github.com/05tanish/repodoc.git#subdirectory=RepoDoc
-```
-
-**Option 2: Install Locally (Development)**
-```bash
-git clone https://github.com/05tanish/repodoc.git
-cd repodoc/RepoDoc
-pip install -e .
+git clone https://github.com/example/repodoctor.git
 ```
 
 ## Usage
-Once installed, the `repodoctor` command is available globally. Run it against any target repository:
+Run the package directory against your target repository:
 
 ```bash
-repodoctor /path/to/your/repo
+python -m repodoctor /path/to/your/repo
 ```
 
 ### CLI Options
@@ -66,8 +56,6 @@ repodoctor /path/to/your/repo
 | `--ignore` | Comma-separated list of custom directories to ignore |
 | `--large-file-lines` | Threshold for large file lines (default: 500) |
 | `--duplicate-lines` | Minimum lines for duplicate detection (default: 8) |
-| `--parallel`, `-j` | Enable parallel file scanning using ThreadPoolExecutor (faster on large repos) |
-| `--no-animation` | Disable live CLI spinner / progress bar animation |
 | `--security` | Focus only on security analysis |
 | `--todos` | Focus only on TODO/FIXME analysis |
 | `--git` | Include Git analysis (Always attempts by default) |
@@ -131,4 +119,4 @@ python -m unittest discover -s tests -v
 Built for the **Zero Dependency | 72-Hour Hackathon**.
 
 ## License
-
+MIT

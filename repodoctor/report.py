@@ -4,7 +4,7 @@ from .models import ReportData
 
 from typing import Dict, Optional
 
-def print_terminal_report(data: ReportData, use_color: bool = True, large_file_threshold: int = 500, deltas: Optional[Dict[str, int]] = None) -> None:
+def print_terminal_report(data: ReportData, use_color: bool = True, large_file_threshold: int = 500, deltas: Optional[Dict[str, int]] = None, exec_time: float = None, show_tree: bool = False) -> None:
     def c(text: str, color_code: str) -> str:
         if not use_color: return text
         return f"\033[{color_code}m{text}\033[0m"
