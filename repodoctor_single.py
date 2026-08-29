@@ -1136,6 +1136,19 @@ def generate_html_report(data: ReportData, large_file_threshold: int = 500) -> s
     high_nesting = sum(1 for f in data.files if f.metrics and f.metrics.max_nesting > 4)
     total_smells = sum(len(f.code_smells) for f in data.files if f.code_smells)
 
+    
+    # HTML additions
+    sorted_files = sorted(data.files, key=lambda x: x.lines, reverse=True)
+    heaviest_files = sorted_files[:3]
+    
+    heavy_html = "".join(f"<li><span>{f.path}</span> <strong>{f.lines:,} lines</strong></li>" for f in heaviest_files) if heaviest_files else "<li>None</li>"
+    
+    security_html = ""
+    if data.security:
+        security_html = "".join(f"<tr><td>{s.filepath}:{s.line_number}</td><td><span class='badge fail'>{s.category}</span></td><td>{s.redacted_value}</td></tr>" for s in data.security)
+    else:
+        security_html = "<tr><td colspan='3' style='text-align:center;'>No secrets detected! 🎉</td></tr>"
+
     html = f'''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1310,6 +1323,23 @@ def generate_html_report(data: ReportData, large_file_threshold: int = 500) -> s
             {''.join(f"<tr><td>{k}</td><td><span class='badge {v.lower()}'>{v}</span></td></tr>" for k, v in data.structure.items())}
         </table>
     </div>
+
+    <div class="grid">
+        <div class="section">
+            <h2>Top 3 Heaviest Files</h2>
+            <ul class="feature-list">
+                {heavy_html}
+            </ul>
+        </div>
+        <div class="section" style="grid-column: 1 / -1;">
+            <h2>Security Secrets Findings</h2>
+            <table>
+                <tr><th>File : Line</th><th>Category</th><th>Redacted Value</th></tr>
+                {security_html}
+            </table>
+        </div>
+    </div>
+
 </div>
 </body>
 </html>'''
