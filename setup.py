@@ -5,7 +5,7 @@ with open("README.md", encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
-    name="repodoctor",
+    name="repodoctor-cli",
     version="1.0.0",
     description="Zero-dependency repository health analyser",
     long_description=long_description,
