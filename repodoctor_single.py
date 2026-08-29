@@ -1439,12 +1439,14 @@ def main():
     # ------------------------------------------------------------------ #
     # File scanning (with optional animation + parallel mode)
     # ------------------------------------------------------------------ #
-    files = scan_repository(
-        root_path,
-        custom_ignores,
-        parallel=use_parallel,
-        show_animation=show_animation,
-    )
+    files = []
+    for rp in root_paths:
+        files.extend(scan_repository(
+            rp,
+            custom_ignores,
+            parallel=use_parallel,
+            show_animation=show_animation,
+        ))
 
     # ------------------------------------------------------------------ #
     # Analysis phases — show spinner for each
