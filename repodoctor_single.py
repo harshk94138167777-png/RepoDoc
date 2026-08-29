@@ -1485,10 +1485,22 @@ def main():
         repo_name = os.path.basename(os.path.abspath(root_path)) or "Unknown"
 
         # AI & Advanced analytics (computed just in time)
+        import collections
+        all_words = []
+        for f in files:
+            try:
+                with open(f.path, 'r', encoding='utf-8', errors='ignore') as file_handle:
+                    content = file_handle.read()
+                    f._words = re.findall(r'\b[a-zA-Z_]{3,}\b', content)
+                    all_words.extend(f._words)
+            except Exception:
+                f._words = []
+
         positive_words = {"awesome", "great", "excellent", "amazing", "good", "perfect", "wow", "love", "thanks", "beautiful", "brilliant", "clean", "elegant", "smart"}
         negative_words = {"fuck", "shit", "crap", "bitch", "damn", "hate", "ugly", "stupid", "terrible", "awful", "horrible", "mess", "hack", "fixme", "gross", "disgusting", "wtf"}
-        pos_count = sum(1 for f in files if f.metrics for _ in f.metrics.words if _ in positive_words)
-        neg_count = sum(1 for f in files if f.metrics for _ in f.metrics.words if _ in negative_words)
+        
+        pos_count = sum(1 for f in files for w in getattr(f, "_words", []) if w.lower() in positive_words)
+        neg_count = sum(1 for f in files for w in getattr(f, "_words", []) if w.lower() in negative_words)
         
         if pos_count == 0 and neg_count == 0:
             mood_str = "Neutral 😐 (0 positive, 0 negative words)"
@@ -1503,7 +1515,7 @@ def main():
         if len(files) > 1:
             try:
                 import difflib
-                texts = [(f, " ".join(f.metrics.words)) for f in files if f.metrics and len(f.metrics.words) > 50]
+                texts = [(f, " ".join(getattr(f, "_words", []))) for f in files if len(getattr(f, "_words", [])) > 50]
                 if len(texts) > 1:
                     texts.sort(key=lambda x: len(x[1]), reverse=True)
                     top_files = texts[:10]
@@ -1520,14 +1532,8 @@ def main():
             except Exception:
                 pass
 
-        import collections
-        all_words = []
-        for f in files:
-            if f.metrics:
-                all_words.extend(f.metrics.words)
-        word_counter = collections.Counter(all_words)
-        stop_words = {"the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "by", "as", "is", "are", "was", "were", "be", "been", "being", "have", "has", "had", "do", "does", "did", "will", "would", "shall", "should", "can", "could", "may", "might", "must", "if", "then", "else", "while", "for", "def", "class", "return", "import", "from", "print", "self", "None", "True", "False"}
-        filtered_words = [w for w in all_words if len(w) > 3 and w not in stop_words]
+        stop_words = {"the", "and", "but", "for", "with", "was", "were", "been", "being", "have", "has", "had", "will", "would", "shall", "should", "can", "could", "may", "might", "must", "then", "else", "while", "def", "class", "return", "import", "from", "print", "self", "None", "True", "False"}
+        filtered_words = [w for w in all_words if len(w) > 3 and w.lower() not in stop_words]
         top_words = collections.Counter(filtered_words).most_common(5)
 
         data = ReportData(
