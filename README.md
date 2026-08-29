@@ -25,7 +25,17 @@ RepoDoctor is a production-quality CLI tool that analyzes a software repository 
 - **Baseline Tracking**: Compare current scans against past reports (`--baseline`) to track regressions over time.
 
 ## Architecture
-Modular Python architecture utilizing built-in `argparse`, `subprocess`, `ast`, and `unittest`. Data structures rely on `dataclasses`.
+
+RepoDoctor is built using a highly modular, zero-dependency Python architecture. It leverages the standard library to achieve multi-threading, abstract syntax tree parsing, and subprocess execution.
+
+### Core Modules:
+- **`__main__.py`**: The CLI entry point. Handles `argparse` configuration, orchestrates the scanning pipeline, and directs output formatting.
+- **`scanner.py`**: The parallel execution engine. Uses `concurrent.futures.ThreadPoolExecutor` for asynchronous, I/O-bound filesystem traversal and file-level metrics gathering.
+- **`analyzer.py`**: The static analysis core. Uses the built-in `ast` module to calculate cyclomatic complexity, implements rolling-window algorithms for duplication detection, and runs regex patterns for code smells, TODOs, and vocabulary extraction.
+- **`security.py`**: The credential scanner. Employs regex-based pattern matching (with confidence scoring) to detect exposed API keys and environment secrets, ensuring they are safely redacted.
+- **`git_utils.py`**: Git integration module. Safely orchestrates `subprocess` calls to the local Git binary to extract commits, top contributors, branch info, and code hotspots.
+- **`report.py`**: The presentation layer. Responsible for rendering the Animated ANSI terminal UI, generating machine-readable JSON, producing GitHub-style SVG badges, and rendering the standalone HTML dashboard.
+- **`models.py`**: The data layer. Strictly typed using Python `dataclasses` to enforce a consistent schema for all metrics (`ReportData`, `FileMetrics`, etc.) across the pipeline.
 
 ## Installation
 No dependencies are required. Clone the repository or copy the `repodoctor` folder:

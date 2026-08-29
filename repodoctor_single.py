@@ -1157,130 +1157,127 @@ def generate_html_report(data: ReportData, large_file_threshold: int = 500) -> s
 <title>RepoDoctor Dashboard - {data.name}</title>
 <style>
     :root {{
-        --bg-main: #0f172a;
-        --bg-card: #1e293b;
-        --text-main: #f8fafc;
-        --text-muted: #94a3b8;
-        --accent: #3b82f6;
-        --success: #10b981;
-        --warning: #f59e0b;
-        --danger: #ef4444;
-        --border: #334155;
+        --bg-main: #121212;
+        --text-main: #e0e0e0;
+        --text-muted: #888888;
+        --border: #444444;
+        --bg-card: #1a1a1a;
     }}
     body {{
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
         background-color: var(--bg-main);
         color: var(--text-main);
         margin: 0;
         padding: 40px 20px;
-        line-height: 1.6;
+        line-height: 1.5;
+        font-size: 14px;
     }}
-    .container {{ max-width: 1100px; margin: 0 auto; }}
-    .header {{ text-align: center; margin-bottom: 40px; }}
+    .container {{ max-width: 900px; margin: 0 auto; }}
+    .header {{ margin-bottom: 40px; border-bottom: 2px dashed var(--border); padding-bottom: 20px; }}
     .header h1 {{
-        font-size: 2.8rem;
-        margin-bottom: 10px;
+        font-size: 24px;
+        margin: 0 0 10px 0;
         color: var(--text-main);
-        letter-spacing: -1px;
-        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 2px;
     }}
-    .score-container {{ display: flex; justify-content: center; margin: 30px 0 40px 0; }}
-    .score-circle {{
-        width: 160px; height: 160px; border-radius: 50%;
-        background: var(--bg-card);
-        border: 2px solid { '#10b981' if (data.score and data.score.score >= 80) else ('#f59e0b' if (data.score and data.score.score >= 50) else '#ef4444') };
-        display: flex; flex-direction: column; justify-content: center; align-items: center;
+    .target-path {{
+        color: var(--text-muted);
+        margin: 0;
     }}
-    .score-circle span.num {{ font-size: 54px; font-weight: 800; line-height: 1; }}
-    .score-circle span.lbl {{ font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-top: 5px; }}
-    .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px; }}
+    .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 40px; }}
     .card {{
-        background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
-        padding: 25px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); transition: transform 0.2s;
+        background: var(--bg-card); 
+        border: 1px solid var(--border); 
+        padding: 20px;
     }}
-    .card:hover {{ transform: translateY(-5px); border-color: var(--accent); }}
-    .card h3 {{ margin: 0 0 10px 0; font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }}
-    .card .val {{ font-size: 32px; font-weight: 700; }}
-    .section {{ background: var(--bg-card); border-radius: 12px; padding: 30px; margin-bottom: 25px; border: 1px solid var(--border); }}
-    .section h2 {{ margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 15px; color: var(--accent); font-size: 20px; }}
+    .card h3 {{ margin: 0 0 10px 0; font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: normal; }}
+    .card .val {{ font-size: 24px; color: var(--text-main); }}
+    
+    .section-wrapper {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }}
+    @media (max-width: 768px) {{ .section-wrapper {{ grid-template-columns: 1fr; }} }}
+    
+    .section {{ background: var(--bg-card); padding: 20px; border: 1px solid var(--border); }}
+    .section.full {{ grid-column: 1 / -1; margin-bottom: 20px; }}
+    .section h2 {{ margin: 0 0 20px 0; font-size: 14px; text-transform: uppercase; color: var(--text-main); border-bottom: 1px dashed var(--border); padding-bottom: 10px; font-weight: normal; }}
+    
     ul.feature-list {{ list-style: none; padding: 0; margin: 0; }}
-    ul.feature-list li {{ padding: 12px 0; border-bottom: 1px dashed var(--border); display: flex; justify-content: space-between; }}
+    ul.feature-list li {{ padding: 10px 0; border-bottom: 1px dashed var(--border); display: flex; justify-content: space-between; }}
     ul.feature-list li:last-child {{ border-bottom: none; padding-bottom: 0; }}
-    table {{ width: 100%; border-collapse: collapse; margin-top: 15px; }}
-    th, td {{ padding: 12px 15px; border-bottom: 1px solid var(--border); text-align: left; }}
-    th {{ font-weight: 600; color: var(--text-muted); text-transform: uppercase; font-size: 12px; }}
-    .badge {{ padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; text-transform: uppercase; }}
-    .badge.pass {{ background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }}
-    .badge.warn {{ background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }}
-    .badge.fail {{ background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }}
-
-    /* Classy Transitions */
-    .score-circle {{ transition: transform 0.3s; }}
-    .score-circle:hover {{ transform: scale(1.05); }}
-    .card {{ position: relative; overflow: hidden; }}
+    
+    table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
+    th, td {{ padding: 12px 10px; border-bottom: 1px dashed var(--border); text-align: left; font-weight: normal; }}
+    th {{ color: var(--text-muted); text-transform: uppercase; font-size: 12px; }}
+    
+    .badge {{ padding: 2px 6px; font-size: 12px; text-transform: uppercase; border: 1px solid var(--text-main); color: var(--text-main); }}
 </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
-        <h1>RepoDoctor Dashboard</h1>
-        <p style="color: var(--text-muted); font-family: monospace; background: rgba(0,0,0,0.3); padding: 5px 15px; border-radius: 20px; display: inline-block;">Target: {data.path}</p>
-    </div>
-    
-    <div class="score-container">
-        <div class="score-circle">
-            <span class="num">{data.score.score if data.score else 'N/A'}</span>
-            <span class="lbl">Health</span>
-        </div>
+        <h1>RepoDoctor</h1>
+        <p class="target-path">{data.path}</p>
     </div>
     
     <div class="grid">
-        <div class="card"><h3>Files Scanned</h3><div class="val">{len(data.files)}</div></div>
-        <div class="card"><h3>Lines of Code</h3><div class="val">{total_lines:,}</div></div>
-        <div class="card"><h3>Security Secrets</h3><div class="val" style="color: { 'var(--danger)' if data.security else 'var(--success)' }">{len(data.security)}</div></div>
-        <div class="card"><h3>Code Smells (Linter)</h3><div class="val" style="color: { 'var(--warning)' if total_smells > 0 else 'var(--success)' }">{total_smells}</div></div>
+        <div class="card">
+            <h3>Health Score</h3>
+            <div class="val">{data.score.score if data.score else 'N/A'}</div>
+        </div>
+        <div class="card">
+            <h3>Files Scanned</h3>
+            <div class="val">{len(data.files)}</div>
+        </div>
+        <div class="card">
+            <h3>Lines of Code</h3>
+            <div class="val">{total_lines:,}</div>
+        </div>
+        <div class="card">
+            <h3>Security Secrets</h3>
+            <div class="val">{len(data.security)}</div>
+        </div>
     </div>
     
-    <div class="grid">
-        <div class="section" style="margin-bottom:0">
-            <h2>AI & Advanced Analytics</h2>
+    <div class="section-wrapper">
+        <div class="section">
+            <h2>Maintainability</h2>
             <ul class="feature-list">
-                <li><span>🎭 Developer Mood:</span> <strong>{data.mood if data.mood else 'N/A'}</strong></li>
-                <li><span>👯‍♂️ Clone Exposer:</span> <strong>{data.clone_exposer if data.clone_exposer else 'N/A'}</strong></li>
-                <li><span>🔥 Git Hotspot:</span> <strong>{data.git.hotspot if data.git.available and data.git.hotspot else "N/A"}</strong></li>
-                <li><span>👑 Top Contributor:</span> <strong>{data.git.top_contributor if data.git.available and data.git.top_contributor else "N/A"}</strong></li>
+                <li><span>High Complexity</span> <strong>{high_nesting} funcs</strong></li>
+                <li><span>Duplicate Blocks</span> <strong>{len(data.duplicates)}</strong></li>
+                <li><span>Code Smells</span> <strong>{total_smells}</strong></li>
+                <li><span>TODO / FIXME</span> <strong>{len(data.todos)}</strong></li>
             </ul>
         </div>
-        <div class="section" style="margin-bottom:0">
-            <h2>Maintainability Metrics</h2>
+        
+        <div class="section">
+            <h2>AI & Git Analytics</h2>
             <ul class="feature-list">
-                <li><span>High Nesting / Complexity:</span> <strong>{high_nesting} functions</strong></li>
-                <li><span>Duplicate Blocks:</span> <strong>{len(data.duplicates)} blocks</strong></li>
-                <li><span>TODO / FIXME:</span> <strong>{len(data.todos)} items</strong></li>
-                <li><span>Top Vocabulary:</span> <strong style="font-size:12px; color: var(--accent);">{ ', '.join(f"{w} ({c})" for w, c in data.top_words) if data.top_words else 'N/A' }</strong></li>
+                <li><span>Developer Mood</span> <strong>{data.mood if data.mood else 'N/A'}</strong></li>
+                <li><span>Clone Exposer</span> <strong>{data.clone_exposer if data.clone_exposer else 'N/A'}</strong></li>
+                <li><span>Top Contributor</span> <strong>{data.git.top_contributor if data.git.available and data.git.top_contributor else "N/A"}</strong></li>
+                <li><span>Git Hotspot</span> <strong>{data.git.hotspot if data.git.available and data.git.hotspot else "N/A"}</strong></li>
             </ul>
         </div>
-    </div>
+        
+        <div class="section full">
+            <h2>Project Structure Validation</h2>
+            <table>
+                <tr><th>Requirement</th><th>Status</th></tr>
+                {''.join(f"<tr><td>{k}</td><td><span class='badge'>{v}</span></td></tr>" for k, v in data.structure.items())}
+            </table>
+        </div>
 
-    <div class="section">
-        <h2>Project Structure Validation</h2>
-        <table>
-            <tr><th>Requirement</th><th>Status</th></tr>
-            {''.join(f"<tr><td>{k}</td><td><span class='badge {v.lower()}'>{v}</span></td></tr>" for k, v in data.structure.items())}
-        </table>
-    </div>
-
-    <div>
-        <div class="section" style="width: 100%; box-sizing: border-box;">
+        <div class="section full">
             <h2>Top 3 Heaviest Files</h2>
             <ul class="feature-list">
                 {heavy_html}
             </ul>
         </div>
-        <div class="section" style="width: 100%; box-sizing: border-box; overflow-x: auto;">
-            <h2>Security Secrets Findings</h2>
+        
+        <div class="section full" style="margin-bottom: 40px;">
+            <h2>Security Findings</h2>
             <table>
-                <tr><th>File : Line</th><th>Category</th><th>Redacted Value</th></tr>
+                <tr><th>Location</th><th>Category</th><th>Redacted Value</th></tr>
                 {security_html}
             </table>
         </div>
