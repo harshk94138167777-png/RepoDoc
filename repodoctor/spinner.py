@@ -43,17 +43,20 @@ class Spinner:
         sp.stop(success=True)
     """
 
-    def __init__(self, message: str = "Working", colour: bool = True) -> None:
+    def __init__(self, message: str = "Working", colour: bool = True, silent: bool = False) -> None:
         self._message = message
         self._use_colour = colour and _is_tty()
         self._active = False
         self._thread: threading.Thread | None = None
+        self.silent = silent
 
     # ------------------------------------------------------------------ #
     # public API
     # ------------------------------------------------------------------ #
 
     def start(self) -> "Spinner":
+        if self.silent:
+            return self
         if not _is_tty():
             # Non-interactive: just print the static message
             print(f"{self._message}…", flush=True)
@@ -64,6 +67,8 @@ class Spinner:
         return self
 
     def stop(self, success: bool = True, final_message: str = "") -> None:
+        if self.silent:
+            return
         self._active = False
         if self._thread is not None:
             self._thread.join()

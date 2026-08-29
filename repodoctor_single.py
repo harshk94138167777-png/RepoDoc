@@ -14,8 +14,11 @@ from typing import List, Tuple
 from typing import Optional, List, Tuple, Dict, Any
 import argparse
 import ast
+import collections
 import concurrent.futures
+import contextlib
 import hashlib
+import io
 import itertools
 import json
 import os
@@ -200,17 +203,20 @@ class Spinner:
         sp.stop(success=True)
     """
 
-    def __init__(self, message: str = "Working", colour: bool = True) -> None:
+    def __init__(self, message: str = "Working", colour: bool = True, silent: bool = False) -> None:
         self._message = message
         self._use_colour = colour and _is_tty()
         self._active = False
         self._thread: threading.Thread | None = None
+        self.silent = silent
 
     # ------------------------------------------------------------------ #
     # public API
     # ------------------------------------------------------------------ #
 
     def start(self) -> "Spinner":
+        if self.silent:
+            return self
         if not _is_tty():
             # Non-interactive: just print the static message
             print(f"{self._message}…", flush=True)
@@ -221,6 +227,8 @@ class Spinner:
         return self
 
     def stop(self, success: bool = True, final_message: str = "") -> None:
+        if self.silent:
+            return
         self._active = False
         if self._thread is not None:
             self._thread.join()
@@ -1157,184 +1165,127 @@ def generate_html_report(data: ReportData, large_file_threshold: int = 500) -> s
 <title>RepoDoctor Dashboard - {data.name}</title>
 <style>
     :root {{
-        --bg-main: #0f172a;
-        --bg-card: #1e293b;
-        --text-main: #f8fafc;
-        --text-muted: #94a3b8;
-        --accent: #3b82f6;
-        --success: #10b981;
-        --warning: #f59e0b;
-        --danger: #ef4444;
-        --border: #334155;
+        --bg-main: #121212;
+        --text-main: #e0e0e0;
+        --text-muted: #888888;
+        --border: #444444;
+        --bg-card: #1a1a1a;
     }}
     body {{
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
         background-color: var(--bg-main);
         color: var(--text-main);
         margin: 0;
         padding: 40px 20px;
-        line-height: 1.6;
+        line-height: 1.5;
+        font-size: 14px;
     }}
-    .container {{ max-width: 1100px; margin: 0 auto; }}
-    .header {{ text-align: center; margin-bottom: 40px; }}
+    .container {{ max-width: 900px; margin: 0 auto; }}
+    .header {{ margin-bottom: 40px; border-bottom: 2px dashed var(--border); padding-bottom: 20px; }}
     .header h1 {{
-        font-size: 2.8rem;
-        margin-bottom: 10px;
-        background: -webkit-linear-gradient(45deg, #60a5fa, #c084fc);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        font-size: 24px;
+        margin: 0 0 10px 0;
+        color: var(--text-main);
+        text-transform: uppercase;
+        letter-spacing: 2px;
     }}
-    .score-container {{ display: flex; justify-content: center; margin: 30px 0 40px 0; }}
-    .score-circle {{
-        width: 160px; height: 160px; border-radius: 50%;
-        background: var(--bg-card);
-        border: 4px solid { '#10b981' if (data.score and data.score.score >= 80) else ('#f59e0b' if (data.score and data.score.score >= 50) else '#ef4444') };
-        display: flex; flex-direction: column; justify-content: center; align-items: center;
-        box-shadow: 0 0 30px { 'rgba(16,185,129,0.3)' if (data.score and data.score.score >= 80) else ('rgba(245,158,11,0.3)' if (data.score and data.score.score >= 50) else 'rgba(239,68,68,0.3)') };
+    .target-path {{
+        color: var(--text-muted);
+        margin: 0;
     }}
-    .score-circle span.num {{ font-size: 54px; font-weight: 800; line-height: 1; }}
-    .score-circle span.lbl {{ font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-top: 5px; }}
-    .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px; }}
+    .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 40px; }}
     .card {{
-        background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
-        padding: 25px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); transition: transform 0.2s;
+        background: var(--bg-card); 
+        border: 1px solid var(--border); 
+        padding: 20px;
     }}
-    .card:hover {{ transform: translateY(-5px); border-color: var(--accent); }}
-    .card h3 {{ margin: 0 0 10px 0; font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }}
-    .card .val {{ font-size: 32px; font-weight: 700; }}
-    .section {{ background: var(--bg-card); border-radius: 12px; padding: 30px; margin-bottom: 25px; border: 1px solid var(--border); }}
-    .section h2 {{ margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 15px; color: var(--accent); font-size: 20px; }}
+    .card h3 {{ margin: 0 0 10px 0; font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: normal; }}
+    .card .val {{ font-size: 24px; color: var(--text-main); }}
+    
+    .section-wrapper {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }}
+    @media (max-width: 768px) {{ .section-wrapper {{ grid-template-columns: 1fr; }} }}
+    
+    .section {{ background: var(--bg-card); padding: 20px; border: 1px solid var(--border); }}
+    .section.full {{ grid-column: 1 / -1; margin-bottom: 20px; }}
+    .section h2 {{ margin: 0 0 20px 0; font-size: 14px; text-transform: uppercase; color: var(--text-main); border-bottom: 1px dashed var(--border); padding-bottom: 10px; font-weight: normal; }}
+    
     ul.feature-list {{ list-style: none; padding: 0; margin: 0; }}
-    ul.feature-list li {{ padding: 12px 0; border-bottom: 1px dashed var(--border); display: flex; justify-content: space-between; }}
+    ul.feature-list li {{ padding: 10px 0; border-bottom: 1px dashed var(--border); display: flex; justify-content: space-between; }}
     ul.feature-list li:last-child {{ border-bottom: none; padding-bottom: 0; }}
-    table {{ width: 100%; border-collapse: collapse; margin-top: 15px; }}
-    th, td {{ padding: 12px 15px; border-bottom: 1px solid var(--border); text-align: left; }}
-    th {{ font-weight: 600; color: var(--text-muted); text-transform: uppercase; font-size: 12px; }}
-    .badge {{ padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; text-transform: uppercase; }}
-    .badge.pass {{ background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }}
-    .badge.warn {{ background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }}
-    .badge.fail {{ background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }}
-
-    /* Advanced UI Animations */
-    @keyframes pulse {{
-        0% {{ transform: scale(1); filter: brightness(1); }}
-        50% {{ transform: scale(1.05); filter: brightness(1.2); }}
-        100% {{ transform: scale(1); filter: brightness(1); }}
-    }}
-    @keyframes slideUp {{
-        from {{ opacity: 0; transform: translateY(30px); }}
-        to {{ opacity: 1; transform: translateY(0); }}
-    }}
-    @keyframes float {{
-        0% {{ transform: translateY(0px); }}
-        50% {{ transform: translateY(-8px); }}
-        100% {{ transform: translateY(0px); }}
-    }}
-    @keyframes shimmer {{
-        0% {{ background-position: -200% center; }}
-        100% {{ background-position: 200% center; }}
-    }}
-
-    .header h1 {{
-        animation: float 4s ease-in-out infinite;
-        background-size: 200% auto;
-    }}
-    .score-circle {{
-        animation: pulse 2.5s infinite ease-in-out;
-        transition: transform 0.3s;
-    }}
-    .score-circle:hover {{
-        transform: scale(1.1) !important;
-        cursor: crosshair;
-    }}
-    .card {{
-        opacity: 0;
-        animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }}
-    .card:nth-child(1) {{ animation-delay: 0.1s; }}
-    .card:nth-child(2) {{ animation-delay: 0.2s; }}
-    .card:nth-child(3) {{ animation-delay: 0.3s; }}
-    .card:nth-child(4) {{ animation-delay: 0.4s; }}
     
-    .section {{
-        opacity: 0;
-        animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        animation-delay: 0.5s;
-    }}
+    table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
+    th, td {{ padding: 12px 10px; border-bottom: 1px dashed var(--border); text-align: left; font-weight: normal; }}
+    th {{ color: var(--text-muted); text-transform: uppercase; font-size: 12px; }}
     
-    .card::before {{
-        content: '';
-        position: absolute;
-        top: 0; left: -100%; width: 50%; height: 100%;
-        background: linear-gradient(to right, transparent, rgba(255,255,255,0.05), transparent);
-        transform: skewX(-20deg);
-        transition: 0.5s;
-    }}
-    .card:hover::before {{ left: 150%; }}
-    .card {{ position: relative; overflow: hidden; }}
+    .badge {{ padding: 2px 6px; font-size: 12px; text-transform: uppercase; border: 1px solid var(--text-main); color: var(--text-main); }}
 </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
-        <h1>RepoDoctor Dashboard</h1>
-        <p style="color: var(--text-muted); font-family: monospace; background: rgba(0,0,0,0.3); padding: 5px 15px; border-radius: 20px; display: inline-block;">Target: {data.path}</p>
-    </div>
-    
-    <div class="score-container">
-        <div class="score-circle">
-            <span class="num">{data.score.score if data.score else 'N/A'}</span>
-            <span class="lbl">Health</span>
-        </div>
+        <h1>RepoDoctor</h1>
+        <p class="target-path">{data.path}</p>
     </div>
     
     <div class="grid">
-        <div class="card"><h3>Files Scanned</h3><div class="val">{len(data.files)}</div></div>
-        <div class="card"><h3>Lines of Code</h3><div class="val">{total_lines:,}</div></div>
-        <div class="card"><h3>Security Secrets</h3><div class="val" style="color: { 'var(--danger)' if data.security else 'var(--success)' }">{len(data.security)}</div></div>
-        <div class="card"><h3>Code Smells (Linter)</h3><div class="val" style="color: { 'var(--warning)' if total_smells > 0 else 'var(--success)' }">{total_smells}</div></div>
+        <div class="card">
+            <h3>Health Score</h3>
+            <div class="val">{data.score.score if data.score else 'N/A'}</div>
+        </div>
+        <div class="card">
+            <h3>Files Scanned</h3>
+            <div class="val">{len(data.files)}</div>
+        </div>
+        <div class="card">
+            <h3>Lines of Code</h3>
+            <div class="val">{total_lines:,}</div>
+        </div>
+        <div class="card">
+            <h3>Security Secrets</h3>
+            <div class="val">{len(data.security)}</div>
+        </div>
     </div>
     
-    <div class="grid">
-        <div class="section" style="margin-bottom:0">
-            <h2>AI & Advanced Analytics</h2>
+    <div class="section-wrapper">
+        <div class="section">
+            <h2>Maintainability</h2>
             <ul class="feature-list">
-                <li><span>🎭 Developer Mood:</span> <strong>{data.mood if data.mood else 'N/A'}</strong></li>
-                <li><span>👯‍♂️ Clone Exposer:</span> <strong>{data.clone_exposer if data.clone_exposer else 'N/A'}</strong></li>
-                <li><span>🔥 Git Hotspot:</span> <strong>{data.git.hotspot if data.git.available and data.git.hotspot else "N/A"}</strong></li>
-                <li><span>👑 Top Contributor:</span> <strong>{data.git.top_contributor if data.git.available and data.git.top_contributor else "N/A"}</strong></li>
+                <li><span>High Complexity</span> <strong>{high_nesting} funcs</strong></li>
+                <li><span>Duplicate Blocks</span> <strong>{len(data.duplicates)}</strong></li>
+                <li><span>Code Smells</span> <strong>{total_smells}</strong></li>
+                <li><span>TODO / FIXME</span> <strong>{len(data.todos)}</strong></li>
             </ul>
         </div>
-        <div class="section" style="margin-bottom:0">
-            <h2>Maintainability Metrics</h2>
+        
+        <div class="section">
+            <h2>AI & Git Analytics</h2>
             <ul class="feature-list">
-                <li><span>High Nesting / Complexity:</span> <strong>{high_nesting} functions</strong></li>
-                <li><span>Duplicate Blocks:</span> <strong>{len(data.duplicates)} blocks</strong></li>
-                <li><span>TODO / FIXME:</span> <strong>{len(data.todos)} items</strong></li>
-                <li><span>Top Vocabulary:</span> <strong style="font-size:12px; color: var(--accent);">{ ', '.join(f"{w} ({c})" for w, c in data.top_words) if data.top_words else 'N/A' }</strong></li>
+                <li><span>Developer Mood</span> <strong>{data.mood if data.mood else 'N/A'}</strong></li>
+                <li><span>Clone Exposer</span> <strong>{data.clone_exposer if data.clone_exposer else 'N/A'}</strong></li>
+                <li><span>Top Contributor</span> <strong>{data.git.top_contributor if data.git.available and data.git.top_contributor else "N/A"}</strong></li>
+                <li><span>Git Hotspot</span> <strong>{data.git.hotspot if data.git.available and data.git.hotspot else "N/A"}</strong></li>
             </ul>
         </div>
-    </div>
+        
+        <div class="section full">
+            <h2>Project Structure Validation</h2>
+            <table>
+                <tr><th>Requirement</th><th>Status</th></tr>
+                {''.join(f"<tr><td>{k}</td><td><span class='badge'>{v}</span></td></tr>" for k, v in data.structure.items())}
+            </table>
+        </div>
 
-    <div class="section">
-        <h2>Project Structure Validation</h2>
-        <table>
-            <tr><th>Requirement</th><th>Status</th></tr>
-            {''.join(f"<tr><td>{k}</td><td><span class='badge {v.lower()}'>{v}</span></td></tr>" for k, v in data.structure.items())}
-        </table>
-    </div>
-
-    <div>
-        <div class="section" style="width: 100%; box-sizing: border-box;">
+        <div class="section full">
             <h2>Top 3 Heaviest Files</h2>
             <ul class="feature-list">
                 {heavy_html}
             </ul>
         </div>
-        <div class="section" style="width: 100%; box-sizing: border-box; overflow-x: auto;">
-            <h2>Security Secrets Findings</h2>
+        
+        <div class="section full" style="margin-bottom: 40px;">
+            <h2>Security Findings</h2>
             <table>
-                <tr><th>File : Line</th><th>Category</th><th>Redacted Value</th></tr>
+                <tr><th>Location</th><th>Category</th><th>Redacted Value</th></tr>
                 {security_html}
             </table>
         </div>
@@ -1400,6 +1351,205 @@ if sys.stdout.encoding != 'utf-8':
         pass
 
 
+def process_single_repo(root_path, args, idx, custom_ignores, use_parallel, show_animation, start_time):
+    repo_start_time = time.time()
+    # Determine if we should suppress live spinner output (if scanning multiple repos)
+    silent = len(args.path) > 1
+
+    # 1. Scan files
+    files = scan_repository(
+        root_path,
+        custom_ignores,
+        parallel=use_parallel,
+        show_animation=show_animation and not silent,
+    )
+
+    # 2. Run analysis phases
+    with Spinner(f"Detecting languages ({root_path})", colour=show_animation, silent=silent):
+        detect_languages(files)
+
+    with Spinner(f"Analysing metrics ({root_path})", colour=show_animation, silent=silent):
+        analyze_metrics(files)
+
+    with Spinner(f"Scanning TODOs ({root_path})", colour=show_animation, silent=silent):
+        todos = scan_todos(files)
+
+    with Spinner(f"Scanning security patterns ({root_path})", colour=show_animation, silent=silent):
+        security = scan_security(files)
+
+    with Spinner(f"Detecting duplicates ({root_path})", colour=show_animation, silent=silent):
+        duplicates = scan_duplicates(files, args.duplicate_lines)
+
+    with Spinner(f"Checking project structure ({root_path})", colour=show_animation, silent=silent):
+        structure = check_project_structure(root_path)
+
+    with Spinner(f"Reading Git info ({root_path})", colour=show_animation, silent=silent):
+        git_info = get_git_info(root_path)
+
+    repo_name = os.path.basename(os.path.abspath(root_path)) or "Unknown"
+
+    # AI & Advanced analytics (computed just in time)
+    all_words = []
+    for f in files:
+        try:
+            with open(f.path, 'r', encoding='utf-8', errors='ignore') as file_handle:
+                content = file_handle.read()
+                f._words = re.findall(r'\b[a-zA-Z_]{3,}\b', content)
+                all_words.extend(f._words)
+        except Exception:
+            f._words = []
+
+    positive_words = {"awesome", "great", "excellent", "amazing", "good", "perfect", "wow", "love", "thanks", "beautiful", "brilliant", "clean", "elegant", "smart"}
+    negative_words = {"fuck", "shit", "crap", "bitch", "damn", "hate", "ugly", "stupid", "terrible", "awful", "horrible", "mess", "hack", "fixme", "gross", "disgusting", "wtf"}
+    
+    pos_count = sum(1 for f in files for w in getattr(f, "_words", []) if w.lower() in positive_words)
+    neg_count = sum(1 for f in files for w in getattr(f, "_words", []) if w.lower() in negative_words)
+    
+    if pos_count == 0 and neg_count == 0:
+        mood_str = "Neutral 😐 (0 positive, 0 negative words)"
+    elif pos_count > neg_count * 2:
+        mood_str = f"Highly Motivated 🚀 ({pos_count} positive, {neg_count} negative words)"
+    elif neg_count > pos_count * 2:
+        mood_str = f"Severely Frustrated 😡 ({pos_count} positive, {neg_count} negative words)"
+    else:
+        mood_str = f"Balanced ⚖️ ({pos_count} positive, {neg_count} negative words)"
+        
+    clone_str = "No major clones detected 👏"
+    if len(files) > 1:
+        try:
+            import difflib
+            texts = [(f, " ".join(getattr(f, "_words", []))) for f in files if len(getattr(f, "_words", [])) > 50]
+            if len(texts) > 1:
+                texts.sort(key=lambda x: len(x[1]), reverse=True)
+                top_files = texts[:10]
+                best_ratio = 0
+                best_pair = None
+                for i in range(len(top_files)):
+                    for j in range(i+1, len(top_files)):
+                        ratio = difflib.SequenceMatcher(None, top_files[i][1], top_files[j][1]).quick_ratio()
+                        if ratio > best_ratio:
+                            best_ratio = ratio
+                            best_pair = (top_files[i][0].path, top_files[j][0].path)
+                if best_ratio > 0.8:
+                    clone_str = f"{best_pair[0]} & {best_pair[1]} ({int(best_ratio*100)}% identical)"
+        except Exception:
+            pass
+
+    stop_words = {"the", "and", "but", "for", "with", "was", "were", "been", "being", "have", "has", "had", "will", "would", "shall", "should", "can", "could", "may", "might", "must", "then", "else", "while", "def", "class", "return", "import", "from", "print", "self", "None", "True", "False"}
+    filtered_words = [w for w in all_words if len(w) > 3 and w.lower() not in stop_words]
+    top_words = collections.Counter(filtered_words).most_common(5)
+
+    data = ReportData(
+        path=os.path.abspath(root_path),
+        name=repo_name,
+        files=files,
+        todos=todos,
+        security=security,
+        duplicates=duplicates,
+        structure=structure,
+        git=git_info,
+        score=None
+    )
+    
+    data.mood = mood_str
+    data.clone_exposer = clone_str
+    data.top_words = top_words
+
+    score = calculate_score(data)
+    data.score = score
+
+    local_exit_code = 0
+    if score and score.score < getattr(args, "fail_under", 0):
+        local_exit_code = 1
+
+    deltas = None
+    if getattr(args, "baseline", None) and os.path.exists(args.baseline):
+        try:
+            import json
+            with open(args.baseline, "r") as bf:
+                base_data = json.load(bf)
+                if "score" in base_data and data.score:
+                    deltas = {"score": data.score.score - base_data["score"]}
+        except Exception:
+            pass
+
+    # Generate badge SVG
+    badge_svg = None
+    badge_path = None
+    if getattr(args, "badge", None):
+        color = "#4c1" if score.score >= 90 else ("#dfb317" if score.score >= 70 else "#e05d44")
+        badge_svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="140" height="20">
+  <linearGradient id="b" x2="0" y2="100%">
+    <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+    <stop offset="1" stop-opacity=".1"/>
+  </linearGradient>
+  <mask id="a">
+    <rect width="140" height="20" rx="3" fill="#fff"/>
+  </mask>
+  <g mask="url(#a)">
+    <path fill="#555" d="M0 0h80v20H0z"/>
+    <path fill="{color}" d="M80 0h60v20H0z"/>
+    <path fill="url(#b)" d="M0 0h140v20H0z"/>
+  </g>
+  <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
+    <text x="40" y="15" fill="#010101" fill-opacity=".3">RepoDoctor</text>
+    <text x="40" y="14">RepoDoctor</text>
+    <text x="109" y="15" fill="#010101" fill-opacity=".3">{score.score}/100</text>
+    <text x="109" y="14">{score.score}/100</text>
+  </g>
+</svg>'''
+        badge_path = args.badge
+        if len(args.path) > 1:
+            base, ext = os.path.splitext(badge_path)
+            badge_path = f"{base}_{idx+1}{ext}"
+
+    # Capture terminal report
+    terminal_report = ""
+    repo_duration = time.time() - repo_start_time
+    if not args.json:
+        f_buf = io.StringIO()
+        with contextlib.redirect_stdout(f_buf):
+            use_color = not args.no_color and sys.stdout.isatty()
+            print_terminal_report(data, use_color, args.large_file_lines, deltas, repo_duration, getattr(args, 'tree', False))
+        terminal_report = f_buf.getvalue()
+
+    # Generate JSON
+    json_report = None
+    if args.json:
+        import json
+        json_report = json.loads(get_json_report(data, args.large_file_lines))
+
+    # Generate HTML
+    html_report = None
+    if args.html:
+        html_report = generate_html_report(data, args.large_file_lines)
+
+    # Generate LLM Export
+    llm_report = None
+    if args.export_prompt:
+        prompt_chunk = f"=== REPOSITORY: {repo_name} ===\n\n"
+        for file_info in files:
+            prompt_chunk += f"--- {file_info.path} ---\n"
+            try:
+                with open(file_info.path, "r", encoding="utf-8", errors="ignore") as src:
+                    prompt_chunk += src.read() + "\n\n"
+            except Exception:
+                prompt_chunk += "[Error reading file contents]\n\n"
+        llm_report = prompt_chunk
+
+    return {
+        "idx": idx,
+        "repo_name": repo_name,
+        "exit_code": local_exit_code,
+        "badge_svg": badge_svg,
+        "badge_path": badge_path,
+        "terminal_report": terminal_report,
+        "json_report": json_report,
+        "html_report": html_report,
+        "llm_report": llm_report,
+        "duration": repo_duration,
+    }
+
 def main():
     start_time = time.time()
     args = parse_args()
@@ -1425,205 +1575,83 @@ def main():
         time.sleep(0.5)
 
     root_paths = args.path
-    root_path = root_paths[0] if root_paths else '.'
-    if not os.path.isdir(root_path):
-        print(f"Error: {root_path} is not a directory.")
-        sys.exit(2)
+    if not root_paths:
+        root_paths = ['.']
+
+    # Validate all directories first
+    for rp in root_paths:
+        if not os.path.isdir(rp):
+            print(f"Error: {rp} is not a directory.")
+            sys.exit(2)
 
     custom_ignores = args.ignore.split(",") if args.ignore else []
-
-    # Determine animation mode (disabled by --no-animation or when not a TTY)
     show_animation = not getattr(args, "no_animation", False)
     use_parallel   = getattr(args, "parallel", False)
 
-    all_reports = []
-    
     html_outputs = []
     json_outputs = []
     llm_outputs = []
     exit_code = 0
 
-    for idx, rp in enumerate(root_paths):
-        root_path = rp
-        if not os.path.isdir(root_path):
-            print(f"Error: {root_path} is not a directory.")
-            continue
-            
-        # ------------------------------------------------------------------ #
-        # File scanning (with optional animation + parallel mode)
-        # ------------------------------------------------------------------ #
-        files = scan_repository(
-            root_path,
-            custom_ignores,
-            parallel=use_parallel,
-            show_animation=show_animation,
-        )
+    # If scanning multiple repositories, notify the user we are processing them in parallel
+    if len(root_paths) > 1 and not args.json:
+        print(c(f"Starting parallel analysis on {len(root_paths)} repositories...", "96"))
+        print()
 
-        # ------------------------------------------------------------------ #
-        # Analysis phases
-        # ------------------------------------------------------------------ #
-        with Spinner(f"Detecting languages ({root_path})", colour=show_animation):
-            detect_languages(files)
-
-        with Spinner(f"Analysing metrics ({root_path})", colour=show_animation):
-            analyze_metrics(files)
-
-        with Spinner(f"Scanning TODOs ({root_path})", colour=show_animation):
-            todos = scan_todos(files)
-
-        with Spinner(f"Scanning security patterns ({root_path})", colour=show_animation):
-            security = scan_security(files)
-
-        with Spinner(f"Detecting duplicates ({root_path})", colour=show_animation):
-            duplicates = scan_duplicates(files, args.duplicate_lines)
-
-        with Spinner(f"Checking project structure ({root_path})", colour=show_animation):
-            structure = check_project_structure(root_path)
-
-        with Spinner(f"Reading Git info ({root_path})", colour=show_animation):
-            git_info = get_git_info(root_path)
-
-        repo_name = os.path.basename(os.path.abspath(root_path)) or "Unknown"
-
-        # AI & Advanced analytics (computed just in time)
-        import collections
-        all_words = []
-        for f in files:
+    # Use ThreadPoolExecutor to run analyses in parallel
+    analysis_start_time = time.time()
+    max_workers = min(len(root_paths), (os.cpu_count() or 1) + 4)
+    results = []
+    
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {
+            executor.submit(
+                process_single_repo, rp, args, idx, custom_ignores, use_parallel, show_animation, start_time
+            ): rp
+            for idx, rp in enumerate(root_paths)
+        }
+        for future in concurrent.futures.as_completed(futures):
+            rp = futures[future]
             try:
-                with open(f.path, 'r', encoding='utf-8', errors='ignore') as file_handle:
-                    content = file_handle.read()
-                    f._words = re.findall(r'\b[a-zA-Z_]{3,}\b', content)
-                    all_words.extend(f._words)
-            except Exception:
-                f._words = []
+                res = future.result()
+                results.append(res)
+                if len(root_paths) > 1 and not args.json:
+                    print(c(f"✔  Completed analysis of {res['repo_name']}", "92"))
+            except Exception as e:
+                print(f"Error analyzing {rp}: {e}", file=sys.stderr)
+                exit_code = max(exit_code, 1)
 
-        positive_words = {"awesome", "great", "excellent", "amazing", "good", "perfect", "wow", "love", "thanks", "beautiful", "brilliant", "clean", "elegant", "smart"}
-        negative_words = {"fuck", "shit", "crap", "bitch", "damn", "hate", "ugly", "stupid", "terrible", "awful", "horrible", "mess", "hack", "fixme", "gross", "disgusting", "wtf"}
-        
-        pos_count = sum(1 for f in files for w in getattr(f, "_words", []) if w.lower() in positive_words)
-        neg_count = sum(1 for f in files for w in getattr(f, "_words", []) if w.lower() in negative_words)
-        
-        if pos_count == 0 and neg_count == 0:
-            mood_str = "Neutral 😐 (0 positive, 0 negative words)"
-        elif pos_count > neg_count * 2:
-            mood_str = f"Highly Motivated 🚀 ({pos_count} positive, {neg_count} negative words)"
-        elif neg_count > pos_count * 2:
-            mood_str = f"Severely Frustrated 😡 ({pos_count} positive, {neg_count} negative words)"
-        else:
-            mood_str = f"Balanced ⚖️ ({pos_count} positive, {neg_count} negative words)"
-            
-        clone_str = "No major clones detected 👏"
-        if len(files) > 1:
+    if len(root_paths) > 1 and not args.json:
+        print()
+        print(c("All analyses completed. Generating reports...", "90"))
+        print()
+
+    # Sort results by their original path order to keep output deterministic
+    results.sort(key=lambda x: x["idx"])
+
+    for res in results:
+        # Update exit code
+        exit_code = max(exit_code, res["exit_code"])
+
+        # Write Badge
+        if res["badge_path"] and res["badge_svg"]:
             try:
-                import difflib
-                texts = [(f, " ".join(getattr(f, "_words", []))) for f in files if len(getattr(f, "_words", [])) > 50]
-                if len(texts) > 1:
-                    texts.sort(key=lambda x: len(x[1]), reverse=True)
-                    top_files = texts[:10]
-                    best_ratio = 0
-                    best_pair = None
-                    for i in range(len(top_files)):
-                        for j in range(i+1, len(top_files)):
-                            ratio = difflib.SequenceMatcher(None, top_files[i][1], top_files[j][1]).quick_ratio()
-                            if ratio > best_ratio:
-                                best_ratio = ratio
-                                best_pair = (top_files[i][0].path, top_files[j][0].path)
-                    if best_ratio > 0.8:
-                        clone_str = f"{best_pair[0]} & {best_pair[1]} ({int(best_ratio*100)}% identical)"
+                with open(res["badge_path"], "w", encoding="utf-8") as bf:
+                    bf.write(res["badge_svg"])
             except Exception:
                 pass
 
-        stop_words = {"the", "and", "but", "for", "with", "was", "were", "been", "being", "have", "has", "had", "will", "would", "shall", "should", "can", "could", "may", "might", "must", "then", "else", "while", "def", "class", "return", "import", "from", "print", "self", "None", "True", "False"}
-        filtered_words = [w for w in all_words if len(w) > 3 and w.lower() not in stop_words]
-        top_words = collections.Counter(filtered_words).most_common(5)
+        # Print Terminal Report
+        if not args.json and res["terminal_report"]:
+            print(res["terminal_report"])
 
-        data = ReportData(
-            path=os.path.abspath(root_path),
-            name=repo_name,
-            files=files,
-            todos=todos,
-            security=security,
-            duplicates=duplicates,
-            structure=structure,
-            git=git_info,
-            score=None
-        )
-        
-        data.mood = mood_str
-        data.clone_exposer = clone_str
-        data.top_words = top_words
-
-        score = calculate_score(data)
-        data.score = score
-
-        if score and score.score < getattr(args, "fail_under", 0):
-            exit_code = max(exit_code, 1)
-
-        deltas = None
-        if getattr(args, "baseline", None) and os.path.exists(args.baseline):
-            try:
-                import json
-                with open(args.baseline, "r") as bf:
-                    base_data = json.load(bf)
-                    if "score" in base_data and data.score:
-                        deltas = {"score": data.score.score - base_data["score"]}
-            except Exception:
-                pass
-
-        if getattr(args, "badge", None):
-            color = "#4c1" if score.score >= 90 else ("#dfb317" if score.score >= 70 else "#e05d44")
-            svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="140" height="20">
-  <linearGradient id="b" x2="0" y2="100%">
-    <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
-    <stop offset="1" stop-opacity=".1"/>
-  </linearGradient>
-  <mask id="a">
-    <rect width="140" height="20" rx="3" fill="#fff"/>
-  </mask>
-  <g mask="url(#a)">
-    <path fill="#555" d="M0 0h80v20H0z"/>
-    <path fill="{color}" d="M80 0h60v20H0z"/>
-    <path fill="url(#b)" d="M0 0h140v20H0z"/>
-  </g>
-  <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
-    <text x="40" y="15" fill="#010101" fill-opacity=".3">RepoDoctor</text>
-    <text x="40" y="14">RepoDoctor</text>
-    <text x="109" y="15" fill="#010101" fill-opacity=".3">{score.score}/100</text>
-    <text x="109" y="14">{score.score}/100</text>
-  </g>
-</svg>'''
-            badge_path = args.badge
-            if len(root_paths) > 1:
-                base, ext = os.path.splitext(badge_path)
-                badge_path = f"{base}_{idx+1}{ext}"
-            try:
-                with open(badge_path, "w", encoding="utf-8") as bf:
-                    bf.write(svg)
-            except Exception:
-                pass
-
-        if args.json:
-            import json
-            json_outputs.append(json.loads(get_json_report(data, args.large_file_lines)))
-
-        if not args.json:
-            use_color = not args.no_color and sys.stdout.isatty()
-            exec_time = time.time() - start_time
-            print_terminal_report(data, use_color, args.large_file_lines, deltas, exec_time, getattr(args, 'tree', False))
-            
-        if args.html:
-            html_outputs.append(generate_html_report(data, args.large_file_lines))
-            
-        if args.export_prompt:
-            prompt_chunk = f"=== REPOSITORY: {repo_name} ===\n\n"
-            for file_info in files:
-                prompt_chunk += f"--- {file_info.path} ---\n"
-                try:
-                    with open(file_info.path, "r", encoding="utf-8", errors="ignore") as src:
-                        prompt_chunk += src.read() + "\n\n"
-                except Exception:
-                    prompt_chunk += "[Error reading file contents]\n\n"
-            llm_outputs.append(prompt_chunk)
+        # Accumulate reports
+        if res["json_report"] is not None:
+            json_outputs.append(res["json_report"])
+        if res["html_report"] is not None:
+            html_outputs.append(res["html_report"])
+        if res["llm_report"] is not None:
+            llm_outputs.append(res["llm_report"])
 
     if args.json and json_outputs:
         import json
@@ -1650,8 +1678,14 @@ def main():
             print(f"Failed to export LLM prompt: {e}")
             sys.exit(3)
 
-    sys.exit(exit_code)
+    if len(root_paths) > 1 and not args.json:
+        total_analysis_time = time.time() - analysis_start_time
+        print(c("────────────────────────────────────────────────────────────", "90"))
+        print(c(f"⚡ Concurrently analyzed {len(root_paths)} repositories in {total_analysis_time:.2f}s", "96;1"))
+        print(c("────────────────────────────────────────────────────────────", "90"))
+        print()
 
+    sys.exit(exit_code)
 
 if __name__ == "__main__":
     main()
