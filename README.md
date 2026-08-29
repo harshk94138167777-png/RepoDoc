@@ -1,132 +1,76 @@
 # RepoDoctor
 
-> RepoDoctor diagnoses a codebase for maintainability, security, duplication, project-structure and Git issues using only the language standard library.
+> RepoDoctor diagnoses a codebase for maintainability, security, duplication, project-structure, and Git issues using only the Python standard library.
 
-## Problem
-Modern development tools rely on heavy dependency chains that are hard to audit, difficult to install in restricted environments, and prone to breaking changes.
+RepoDoctor is a production-quality CLI tool that analyzes software repositories and provides actionable health, security, and maintainability reports without a single third-party runtime dependency. 
 
-## Solution
-RepoDoctor is a production-quality CLI tool that analyzes a software repository and provides an actionable health, security, and maintainability report without a single third-party runtime dependency.
+## Key Features
 
-## Features
-- **Multi-Threaded Parallel Scanning**: Asynchronously processes massive codebases in milliseconds.\n- **Animated Terminal UI**: Beautiful typewriter animations and progress spinners.\n- **Multi-Repository Aggregation**: Scan multiple codebases simultaneously and generate unified or independent reports across all flags (HTML, JSON, LLM prompt).\n- **Zero Runtime Dependencies**: Built entirely with Python's standard library.
-- **Single-File Portability**: Can be compiled into a single `repodoctor_single.py` script for extreme portability.
-- **Developer Mood Analyzer**: Scans code comments and commit messages to calculate the emotional state of the project team.
-- **Code Clone Exposer**: Mathematically cross-references all files to expose the two most identical copy-pasted files in the project.
-- **Micro-Linter Engine**: Instantly flags 30+ code smells including profanity filters, wildcard imports, massive JSON configs, and missing alt-text.
-- **LLM Prompt Exporter**: Instantly bundle your entire codebase into a single text file ready for ChatGPT/Claude (`--export-prompt`).
-- **SVG Badge Generator**: Generate valid GitHub-style SVG health badges without image processing libraries (`--badge`).
-- **Terminal ASCII Tree & Bar Charts**: Visual breakdown of your project's folders (`--tree`) and languages natively in your terminal.
-- **AST Cyclomatic Complexity**: Parses Python Abstract Syntax Trees mathematically to score code logic complexity.
-- **Security Scanner**: Detects exposed API keys, credentials, and `.env` files and automatically redacts findings.
-- **Git Analytics & Hotspots**: Leverages native Git to report top contributors, uncommitted changes, and your most frequently edited file (Hotspot).
-- **Codebase Vocabulary Cloud**: Automatically extracts the most frequently used variable and function names across all your files.
-- **Rich Output Formats**: Choose between Animated ANSI-colored terminal, HTML (`--html`), or JSON (`--json`).
-- **Baseline Tracking**: Compare current scans against past reports (`--baseline`) to track regressions over time.
+- **Multi-Repository Scanning**: Scan multiple codebases simultaneously and generate unified or independent reports.
+- **Zero Runtime Dependencies**: Built entirely with Python's standard library. Portable and fast.
+- **Advanced Static Analysis**: Includes AST Cyclomatic Complexity, Developer Mood Analyzer, Code Clone Exposer, and a Micro-Linter Engine.
+- **Security Scanner**: Detects exposed API keys, credentials, and `.env` files with automatic redaction.
+- **Rich Output Formats**: Animated ANSI-colored terminal, fully offline HTML dashboards (`--html`), or JSON (`--json`).
 
-## Architecture
-
-RepoDoctor is built using a highly modular, zero-dependency Python architecture. It leverages the standard library to achieve multi-threading, abstract syntax tree parsing, and subprocess execution.
-
-### Core Modules:
-- **`__main__.py`**: The CLI entry point. Handles `argparse` configuration, orchestrates the scanning pipeline, and directs output formatting.
-- **`scanner.py`**: The parallel execution engine. Uses `concurrent.futures.ThreadPoolExecutor` for asynchronous, I/O-bound filesystem traversal and file-level metrics gathering.
-- **`analyzer.py`**: The static analysis core. Uses the built-in `ast` module to calculate cyclomatic complexity, implements rolling-window algorithms for duplication detection, and runs regex patterns for code smells, TODOs, and vocabulary extraction.
-- **`security.py`**: The credential scanner. Employs regex-based pattern matching (with confidence scoring) to detect exposed API keys and environment secrets, ensuring they are safely redacted.
-- **`git_utils.py`**: Git integration module. Safely orchestrates `subprocess` calls to the local Git binary to extract commits, top contributors, branch info, and code hotspots.
-- **`report.py`**: The presentation layer. Responsible for rendering the Animated ANSI terminal UI, generating machine-readable JSON, producing GitHub-style SVG badges, and rendering the standalone HTML dashboard.
-- **`models.py`**: The data layer. Strictly typed using Python `dataclasses` to enforce a consistent schema for all metrics (`ReportData`, `FileMetrics`, etc.) across the pipeline.
+---
 
 ## Installation
-No dependencies are required. Clone the repository or copy the `repodoctor` folder:
+
+No dependencies are required. Clone the repository and run it directly:
 
 ```bash
 git clone https://github.com/example/repodoctor.git
 ```
 
-## Usage
-Run the package directory against your target repository:
+## Quick Start & Usage
+
+Run the package against your target repository (or multiple repositories):
 
 ```bash
+# Basic scan of a single repository
 python -m repodoctor /path/to/your/repo
+
+# Generate a self-contained HTML dashboard
+python -m repodoctor /path/to/repo --html report.html
+
+# Multi-repository scanning (aggregate metrics across multiple projects)
+python -m repodoctor /path/to/backend /path/to/frontend
+
 ```
 
-### CLI Options
+### Essential CLI Options
 
 | Flag | Description |
 |---|---|
-| `path` | Path to the repository (default: `.`) |
-| `--json` | Output valid machine-readable JSON |
-| `--html FILE` | Output a self-contained HTML dashboard report |
-| `--export-prompt FILE`| Export the codebase into a single text file for LLM prompting |
+| `path` | Path to the repository/repositories (default: `.`) |
+| `--html FILE` | Output a standalone HTML dashboard report |
+| `--json` | Output machine-readable JSON for CI/CD pipelines |
+| `--export-prompt`| Export the entire codebase into a single text file for LLMs |
+| `--parallel` | Enable multi-threaded scanning for massive codebases |
+| `--tree` | Print an ASCII project directory tree in the terminal |
 | `--badge FILE` | Generate a GitHub-style SVG health badge |
-| `--tree` | Print an ASCII project directory tree at the top of the report |
-| `--baseline FILE` | Path to a previous JSON report to calculate delta trends |
-| `--no-color` | Disable animated ANSI color output |
-| `--ignore` | Comma-separated list of custom directories to ignore |
-| `--large-file-lines` | Threshold for large file lines (default: 500) |
-| `--duplicate-lines` | Minimum lines for duplicate detection (default: 8) |
-| `--security` | Focus only on security analysis |
-| `--todos` | Focus only on TODO/FIXME analysis |
-| `--git` | Include Git analysis (Always attempts by default) |
-| `--verbose` | Enable verbose logging |
-| `--version` | Display version |
-| `--help` | Display help |
+| `--security` | Focus exclusively on security and credential analysis |
 
-### Exit Codes
+---
+
+## Architecture
+
+RepoDoctor is built on a highly modular, zero-dependency Python architecture leveraging the standard library for maximum portability.
+
+- **`__main__.py`**: CLI entry point and pipeline orchestration.
+- **`scanner.py`**: Parallel execution engine utilizing `ThreadPoolExecutor` for asynchronous, I/O-bound filesystem traversal.
+- **`analyzer.py`**: Static analysis core. Utilizes the built-in `ast` module for complexity scoring, rolling-window algorithms for duplication detection, and regex patterns for code smells.
+- **`security.py`**: Credential scanner using regex-based pattern matching and confidence scoring.
+- **`git_utils.py`**: Safely orchestrates `subprocess` calls to the local Git binary for hotspot and contributor analytics.
+- **`report.py`**: Presentation layer for ANSI terminal UI, JSON, HTML templates, and SVG badges.
+
+## Exit Codes
+
+Designed for CI/CD integration:
 - `0`: Successful scan, no serious findings (secrets or duplicates).
-- `1`: Successful scan with findings.
+- `1`: Successful scan with findings (requires attention).
 - `2`: Invalid CLI usage.
 
-## JSON Format
-Use the `--json` flag to export data.
-```json
-{
-  "repository": { "path": ".", "name": "project" },
-  "summary": { "files": 247, "lines": 38421, "health_score": 78 },
-  "security": { "potential_secrets": 0, "findings": [] },
-  "maintainability": { "large_files": 0, "todos": 5, "duplicates": 0 },
-  "git": { "available": true, "branch": "main", "commits": 142, "uncommitted_changes": 0 },
-  "structure": { "README": "PASS", "Tests": "PASS" }
-}
-```
-
-## Performance
-- Uses efficient filesystem walking (`os.walk`).
-- Early bailing on binary files.
-- Rolling window chunking for O(N) deduplication analysis.
-
-## Security Model
-- **Local Only**: No data is uploaded or transmitted.
-- **Redacted Output**: Secrets are never dumped fully in terminal or JSON.
-- **No Evaluation**: Source code is parsed statically (via AST/Regex), never executed.
-- **Safe Execution**: Git commands strictly avoid shell interpolation to prevent injection.
-
-## Limitations
-- Language detection is extension-based.
-- Duplicate detection is line-based rather than AST-based.
-- Security scanner may yield false positives; human review is required.
-
-## Zero-Dependency Proof
-To verify, run within a fully clean virtual environment:
-```bash
-python -m venv /tmp/repodoctor-test
-source /tmp/repodoctor-test/bin/activate
-pip freeze # (Will be empty)
-python -m repodoctor /path/to/repo1 /path/to/repo2
-```
-
-## Standard Library Substitutions
-See [STDLIB.md](STDLIB.md) for details on how we substituted common third-party tools.
-
-## Testing
-Tested with Python `unittest`:
-```bash
-python -m unittest discover -s tests -v
-```
-
-## Hackathon Information
-Built for the **Zero Dependency | 72-Hour Hackathon**.
-
 ## License
+
 MIT
