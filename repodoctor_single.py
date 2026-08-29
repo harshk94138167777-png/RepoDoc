@@ -1439,6 +1439,7 @@ def main():
     all_reports = []
     
     html_outputs = []
+    json_outputs = []
     llm_outputs = []
     exit_code = 0
 
@@ -1558,10 +1559,58 @@ def main():
         if score and score.score < getattr(args, "fail_under", 0):
             exit_code = max(exit_code, 1)
 
+        deltas = None
+        if getattr(args, "baseline", None) and os.path.exists(args.baseline):
+            try:
+                import json
+                with open(args.baseline, "r") as bf:
+                    base_data = json.load(bf)
+                    if "score" in base_data and data.score:
+                        deltas = {"score": data.score.score - base_data["score"]}
+            except Exception:
+                pass
+
+        if getattr(args, "badge", None):
+            color = "#4c1" if score.score >= 90 else ("#dfb317" if score.score >= 70 else "#e05d44")
+            svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="140" height="20">
+  <linearGradient id="b" x2="0" y2="100%">
+    <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+    <stop offset="1" stop-opacity=".1"/>
+  </linearGradient>
+  <mask id="a">
+    <rect width="140" height="20" rx="3" fill="#fff"/>
+  </mask>
+  <g mask="url(#a)">
+    <path fill="#555" d="M0 0h80v20H0z"/>
+    <path fill="{color}" d="M80 0h60v20H0z"/>
+    <path fill="url(#b)" d="M0 0h140v20H0z"/>
+  </g>
+  <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
+    <text x="40" y="15" fill="#010101" fill-opacity=".3">RepoDoctor</text>
+    <text x="40" y="14">RepoDoctor</text>
+    <text x="109" y="15" fill="#010101" fill-opacity=".3">{score.score}/100</text>
+    <text x="109" y="14">{score.score}/100</text>
+  </g>
+</svg>'''
+            badge_path = args.badge
+            if len(root_paths) > 1:
+                import os
+                base, ext = os.path.splitext(badge_path)
+                badge_path = f"{base}_{idx+1}{ext}"
+            try:
+                with open(badge_path, "w", encoding="utf-8") as bf:
+                    bf.write(svg)
+            except Exception:
+                pass
+
+        if args.json:
+            import json
+            json_outputs.append(json.loads(get_json_report(data, args.large_file_lines)))
+
         if not args.json:
             use_color = not args.no_color and sys.stdout.isatty()
             exec_time = time.time() - start_time
-            print_terminal_report(data, use_color, args.large_file_lines, None, exec_time, args.tree)
+            print_terminal_report(data, use_color, args.large_file_lines, deltas, exec_time, getattr(args, 'tree', False))
             
         if args.html:
             html_outputs.append(generate_html_report(data, args.large_file_lines))
@@ -1577,6 +1626,13 @@ def main():
                     prompt_chunk += "[Error reading file contents]\n\n"
             llm_outputs.append(prompt_chunk)
 
+    if args.json and json_outputs:
+        import json
+        if len(json_outputs) == 1:
+            print(json.dumps(json_outputs[0], indent=2))
+        else:
+            print(json.dumps(json_outputs, indent=2))
+            
     if args.html and html_outputs:
         try:
             with open(args.html, "w", encoding="utf-8") as f:
