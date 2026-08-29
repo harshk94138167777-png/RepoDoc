@@ -6,6 +6,7 @@ def run_micro_linters(file_info, content):
     lines = content.splitlines()
     
     if not lines:
+        return smells
     
     # 14. Empty File Check
     if not content.strip():
