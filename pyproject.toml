@@ -1,0 +1,30 @@
+# PEP 517 / 518 — build backend is setuptools (stdlib-bundled, zero new installs)
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "repodoctor"
+version = "1.0.0"
+description = "Zero-dependency repository health analyser"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = []   # ZERO runtime dependencies
+license = { text = "MIT" }
+authors = [
+    { name = "Tanish Jain, Harsh Kumawat" }
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Quality Assurance",
+    "Environment :: Console",
+]
+
+[project.scripts]
+repodoctor = "repodoctor.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["repodoctor*"]

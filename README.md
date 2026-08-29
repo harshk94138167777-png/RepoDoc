@@ -30,17 +30,25 @@ RepoDoctor is a production-quality CLI tool that analyzes a software repository 
 Modular Python architecture utilizing built-in `argparse`, `subprocess`, `ast`, and `unittest`. Data structures rely on `dataclasses`.
 
 ## Installation
-No dependencies are required. Clone the repository or copy the `repodoctor` folder:
+RepoDoctor is packaged as a standard zero-dependency Python tool.
 
+**Option 1: Install Globally via pip (Recommended)**
 ```bash
-git clone https://github.com/example/repodoctor.git
+pip install git+https://github.com/05tanish/repodoc.git#subdirectory=RepoDoc
+```
+
+**Option 2: Install Locally (Development)**
+```bash
+git clone https://github.com/05tanish/repodoc.git
+cd repodoc/RepoDoc
+pip install -e .
 ```
 
 ## Usage
-Run the package directory against your target repository:
+Once installed, the `repodoctor` command is available globally. Run it against any target repository:
 
 ```bash
-python -m repodoctor /path/to/your/repo
+repodoctor /path/to/your/repo
 ```
 
 ### CLI Options
