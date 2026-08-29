@@ -25,7 +25,7 @@ def run_micro_linters(file_info, content):
         if re.search(r'\beval\s*\(', content):
             smells.append("Dangerous eval() usage")
         # 18. Missing strict mode (for pure JS)
-        if file_info.language == "JavaScript" and not re.search(r'["']use strict["']', content):
+        if file_info.language == "JavaScript" and not re.search(r'["\']use strict["\']', content):
             smells.append("Missing \"use strict\" in JS")
         # 19. console.error/warn
         if re.search(r'\bconsole\.(error|warn)\s*\(', content):
@@ -165,7 +165,7 @@ def run_micro_linters(file_info, content):
         if re.search(r'\beval\s*\(', content):
             smells.append("Dangerous eval() usage")
         # 18. Missing strict mode (for pure JS)
-        if file_info.language == "JavaScript" and not re.search(r'["']use strict["']', content):
+        if file_info.language == "JavaScript" and not re.search(r'["\']use strict["\']', content):
             smells.append("Missing \"use strict\" in JS")
         # 19. console.error/warn
         if re.search(r'\bconsole\.(error|warn)\s*\(', content):
