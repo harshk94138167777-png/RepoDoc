@@ -1471,6 +1471,8 @@ def main():
         git_info = get_git_info(root_path)
 
     repo_name = os.path.basename(os.path.abspath(root_path))
+    if len(root_paths) > 1:
+        repo_name += f" and {len(root_paths)-1} others"
 
     data = ReportData(
         path=", ".join(os.path.abspath(rp) for rp in root_paths),
