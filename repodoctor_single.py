@@ -1594,7 +1594,6 @@ def main():
 </svg>'''
             badge_path = args.badge
             if len(root_paths) > 1:
-                import os
                 base, ext = os.path.splitext(badge_path)
                 badge_path = f"{base}_{idx+1}{ext}"
             try:
