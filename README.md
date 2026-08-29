@@ -9,7 +9,7 @@ Modern development tools rely on heavy dependency chains that are hard to audit,
 RepoDoctor is a production-quality CLI tool that analyzes a software repository and provides an actionable health, security, and maintainability report without a single third-party runtime dependency.
 
 ## Features
-- **Multi-Threaded Parallel Scanning**: Asynchronously processes massive codebases in milliseconds.\n- **Animated Terminal UI**: Beautiful typewriter animations and progress spinners.\n- **Zero Runtime Dependencies**: Built entirely with Python's standard library.
+- **Multi-Threaded Parallel Scanning**: Asynchronously processes massive codebases in milliseconds.\n- **Animated Terminal UI**: Beautiful typewriter animations and progress spinners.\n- **Multi-Repository Aggregation**: Scan multiple codebases simultaneously and generate unified or independent reports across all flags (HTML, JSON, LLM prompt).\n- **Zero Runtime Dependencies**: Built entirely with Python's standard library.
 - **Single-File Portability**: Can be compiled into a single `repodoctor_single.py` script for extreme portability.
 - **Developer Mood Analyzer**: Scans code comments and commit messages to calculate the emotional state of the project team.
 - **Code Clone Exposer**: Mathematically cross-references all files to expose the two most identical copy-pasted files in the project.
@@ -103,7 +103,7 @@ To verify, run within a fully clean virtual environment:
 python -m venv /tmp/repodoctor-test
 source /tmp/repodoctor-test/bin/activate
 pip freeze # (Will be empty)
-python -m repodoctor .
+python -m repodoctor /path/to/repo1 /path/to/repo2
 ```
 
 ## Standard Library Substitutions
