@@ -1485,6 +1485,8 @@ def main():
         repo_name = os.path.basename(os.path.abspath(root_path)) or "Unknown"
 
         # AI & Advanced analytics (computed just in time)
+        positive_words = {"awesome", "great", "excellent", "amazing", "good", "perfect", "wow", "love", "thanks", "beautiful", "brilliant", "clean", "elegant", "smart"}
+        negative_words = {"fuck", "shit", "crap", "bitch", "damn", "hate", "ugly", "stupid", "terrible", "awful", "horrible", "mess", "hack", "fixme", "gross", "disgusting", "wtf"}
         pos_count = sum(1 for f in files if f.metrics for _ in f.metrics.words if _ in positive_words)
         neg_count = sum(1 for f in files if f.metrics for _ in f.metrics.words if _ in negative_words)
         
