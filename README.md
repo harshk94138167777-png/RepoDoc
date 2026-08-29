@@ -8,6 +8,21 @@ Modern development tools rely on heavy dependency chains that are hard to audit,
 ## Solution
 RepoDoctor is a production-quality CLI tool that analyzes a software repository and provides an actionable health, security, and maintainability report without a single third-party runtime dependency.
 
+
+## 🚀 Installation
+
+You can install RepoDoctor globally on any OS directly from PyPI:
+
+```bash
+pip install repodoctor-cli
+```
+
+Once installed, simply navigate to any repository and run:
+```bash
+repodoctor .
+```
+
+
 ## Features
 - **Multi-Threaded Parallel Scanning**: Asynchronously processes massive codebases in milliseconds.\n- **Animated Terminal UI**: Beautiful typewriter animations and progress spinners.\n- **Multi-Repository Aggregation**: Scan multiple codebases simultaneously and generate unified or independent reports across all flags (HTML, JSON, LLM prompt).\n- **Zero Runtime Dependencies**: Built entirely with Python's standard library.
 - **Single-File Portability**: Can be compiled into a single `repodoctor_single.py` script for extreme portability.
