@@ -963,6 +963,8 @@ def print_project_tree(data, c_func):
     print()
 
 def print_terminal_report(data: ReportData, use_color: bool = True, large_file_threshold: int = 500, deltas: Optional[Dict[str, int]] = None, exec_time: Optional[float] = None, show_tree: bool = False) -> None:
+    def c(text, code):
+        return f"\033[{code}m{text}\033[0m" if use_color else text
     print()
     print(f"Repository: {data.name}")
     print(f"Path: {data.path}")
