@@ -28,6 +28,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--todos", action="store_true", help="Focus only on TODO/FIXME analysis")
     parser.add_argument("--git", action="store_true", help="Include Git analysis")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
+    parser.add_argument(
+        "--parallel", "-j",
+        action="store_true",
+        help="Enable parallel file scanning using concurrent.futures.ThreadPoolExecutor (faster on large repos)"
+    )
+    parser.add_argument(
+        "--no-animation",
+        action="store_true",
+        help="Disable live CLI spinner / progress bar animation"
+    )
     parser.add_argument("--version", action="version", version="%(prog)s 1.0.0")
 
     return parser

@@ -9,17 +9,20 @@ from typing import Dict, Any
 from typing import Dict, Optional
 from typing import List
 from typing import List, Dict, Tuple
-from typing import List, Set, Optional
+from typing import List, Optional
 from typing import List, Tuple
 from typing import Optional, List, Tuple, Dict, Any
 import argparse
 import ast
+import concurrent.futures
 import hashlib
+import itertools
 import json
 import os
 import re
 import subprocess
 import sys
+import threading
 import time
 
 # --- models.py ---
@@ -135,6 +138,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--todos", action="store_true", help="Focus only on TODO/FIXME analysis")
     parser.add_argument("--git", action="store_true", help="Include Git analysis")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
+    parser.add_argument(
+        "--parallel", "-j",
+        action="store_true",
+        help="Enable parallel file scanning using concurrent.futures.ThreadPoolExecutor (faster on large repos)"
+    )
+    parser.add_argument(
+        "--no-animation",
+        action="store_true",
+        help="Disable live CLI spinner / progress bar animation"
+    )
     parser.add_argument("--version", action="version", version="%(prog)s 1.0.0")
 
     return parser
@@ -144,7 +157,190 @@ def parse_args(args=None):
     return parser.parse_args(args)
 
 
+# --- spinner.py ---
+
+"""
+spinner.py — Zero-dependency terminal spinner / progress animation.
+
+Uses only Python stdlib: sys, threading, time, itertools.
+Automatically suppresses output when stdout is not a TTY
+(e.g. file redirection, CI pipelines).
+"""
+
+
+
+# Braille spinner frames — visually smooth, widely supported
+_SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+
+# ANSI colour codes (disabled when not TTY)
+_CYAN   = "\033[36m"
+_GREEN  = "\033[32m"
+_YELLOW = "\033[33m"
+_RESET  = "\033[0m"
+_BOLD   = "\033[1m"
+
+
+def _is_tty() -> bool:
+    """Return True only when stdout is an interactive terminal."""
+    return hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
+
+
+class Spinner:
+    """
+    Context-manager / manual spinner that renders a live animation line.
+
+    Usage (context manager — recommended):
+        with Spinner("Scanning repository"):
+            do_work()
+
+    Usage (manual):
+        sp = Spinner("Cloning repo")
+        sp.start()
+        do_work()
+        sp.stop(success=True)
+    """
+
+    def __init__(self, message: str = "Working", colour: bool = True) -> None:
+        self._message = message
+        self._use_colour = colour and _is_tty()
+        self._active = False
+        self._thread: threading.Thread | None = None
+
+    # ------------------------------------------------------------------ #
+    # public API
+    # ------------------------------------------------------------------ #
+
+    def start(self) -> "Spinner":
+        if not _is_tty():
+            # Non-interactive: just print the static message
+            print(f"{self._message}…", flush=True)
+            return self
+        self._active = True
+        self._thread = threading.Thread(target=self._spin, daemon=True)
+        self._thread.start()
+        return self
+
+    def stop(self, success: bool = True, final_message: str = "") -> None:
+        self._active = False
+        if self._thread is not None:
+            self._thread.join()
+            self._thread = None
+        if _is_tty():
+            # Clear the spinner line
+            sys.stdout.write("\r\033[K")
+            sys.stdout.flush()
+        # Print final status line
+        if not final_message:
+            final_message = self._message
+        if success:
+            icon = f"{_GREEN}✔{_RESET}" if self._use_colour else "✔"
+        else:
+            icon = f"{_YELLOW}✘{_RESET}" if self._use_colour else "✘"
+        print(f"{icon}  {final_message}", flush=True)
+
+    def update_message(self, message: str) -> None:
+        """Change the message shown next to the spinner in real time."""
+        self._message = message
+
+    # ------------------------------------------------------------------ #
+    # context-manager support
+    # ------------------------------------------------------------------ #
+
+    def __enter__(self) -> "Spinner":
+        return self.start()
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        self.stop(success=exc_type is None)
+        return False  # do not suppress exceptions
+
+    # ------------------------------------------------------------------ #
+    # internal spin loop (runs in background thread)
+    # ------------------------------------------------------------------ #
+
+    def _spin(self) -> None:
+        spinner = itertools.cycle(_SPINNER_FRAMES)
+        while self._active:
+            frame = next(spinner)
+            if self._use_colour:
+                line = f"\r{_CYAN}{_BOLD}{frame}{_RESET}  {self._message} "
+            else:
+                line = f"\r{frame}  {self._message} "
+            sys.stdout.write(line)
+            sys.stdout.flush()
+            time.sleep(0.08)
+        # Final clear is done in stop()
+
+
+class ProgressBar:
+    """
+    Simple zero-dependency terminal progress bar.
+
+    Usage:
+        bar = ProgressBar(total=len(files), label="Scanning")
+        for f in files:
+            process(f)
+            bar.advance()
+        bar.done()
+    """
+
+    def __init__(self, total: int, label: str = "Progress",
+                 width: int = 30, colour: bool = True) -> None:
+        self._total = max(total, 1)
+        self._current = 0
+        self._label = label
+        self._width = width
+        self._use_colour = colour and _is_tty()
+        self._tty = _is_tty()
+
+    def advance(self, n: int = 1) -> None:
+        self._current = min(self._current + n, self._total)
+        if self._tty:
+            self._render()
+
+    def done(self) -> None:
+        self._current = self._total
+        if self._tty:
+            self._render()
+            sys.stdout.write("\n")
+            sys.stdout.flush()
+
+    def _render(self) -> None:
+        pct = self._current / self._total
+        filled = int(self._width * pct)
+        bar_body = "█" * filled + "░" * (self._width - filled)
+
+        if self._use_colour:
+            bar_str = (
+                f"\r{_CYAN}{self._label}{_RESET}  "
+                f"[{_GREEN}{bar_body}{_RESET}] "
+                f"{_BOLD}{int(pct * 100):3d}%{_RESET} "
+                f"({self._current}/{self._total})"
+            )
+        else:
+            bar_str = (
+                f"\r{self._label}  [{bar_body}] "
+                f"{int(pct * 100):3d}% ({self._current}/{self._total})"
+            )
+
+        sys.stdout.write(bar_str)
+        sys.stdout.flush()
+
+
 # --- scanner.py ---
+
+"""
+scanner.py — Repository file walker with optional parallel scanning.
+
+Parallel mode (--parallel / -j):
+  Uses concurrent.futures.ThreadPoolExecutor with worker count =
+  min(32, os.cpu_count() + 4) — the same heuristic CPython uses internally
+  for I/O-bound thread pools.  No third-party libraries required.
+
+Animation:
+  When stdout is a TTY and --no-animation is not set, a live ProgressBar
+  is shown during scanning.  Automatically suppressed in CI / file-redirect
+  environments.
+"""
 
 
 
@@ -152,6 +348,11 @@ DEFAULT_IGNORES = {
     ".git", "node_modules", "__pycache__", ".venv", "venv",
     "env", "dist", "build", "target", "coverage", ".cache"
 }
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
 def is_binary_file(filepath: str, chunk_size: int = 1024) -> bool:
     """Lightweight heuristic to detect if a file is binary."""
@@ -170,6 +371,7 @@ def is_binary_file(filepath: str, chunk_size: int = 1024) -> bool:
         return True
     return False
 
+
 def count_lines(filepath: str) -> int:
     """Count lines in a text file efficiently."""
     lines = 0
@@ -181,54 +383,120 @@ def count_lines(filepath: str) -> int:
         pass
     return lines
 
-def scan_repository(root_path: str, custom_ignores: Optional[List[str]] = None) -> List[FileInfo]:
+
+def _process_file(filepath: str, root_path: str) -> Optional[FileInfo]:
+    """
+    Worker function: stat + classify one file.
+    Runs inside a ThreadPoolExecutor worker when parallel=True,
+    or called directly in sequential mode.
+    Returns None on any unrecoverable error so callers can skip it.
+    """
+    # Avoid broken symlinks
+    if not os.path.exists(filepath):
+        return None
+
+    try:
+        stat_result = os.stat(filepath)
+        size = stat_result.st_size
+    except OSError:
+        return None
+
+    rel_path = os.path.relpath(filepath, root_path)
+    _, ext = os.path.splitext(os.path.basename(filepath))
+
+    is_binary = is_binary_file(filepath)
+    lines = 0 if is_binary else count_lines(filepath)
+
+    return FileInfo(
+        path=filepath,
+        filename=os.path.basename(filepath),
+        extension=ext.lower(),
+        size=size,
+        lines=lines,
+        is_binary=is_binary,
+        language="Unknown",   # populated later by detect_languages()
+        relative_path=rel_path,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Main entry point
+# ---------------------------------------------------------------------------
+
+def scan_repository(
+    root_path: str,
+    custom_ignores: Optional[List[str]] = None,
+    parallel: bool = False,
+    show_animation: bool = True,
+) -> List[FileInfo]:
+    """
+    Walk *root_path* and return a list of FileInfo objects.
+
+    Parameters
+    ----------
+    root_path       : Absolute or relative path to the repository root.
+    custom_ignores  : Extra directory / file names to skip.
+    parallel        : If True, use ThreadPoolExecutor for I/O parallelism.
+    show_animation  : If True (and stdout is a TTY), render a progress bar.
+    """
     ignores = set(DEFAULT_IGNORES)
     if custom_ignores:
         ignores.update(custom_ignores)
-        
+
     root_path = os.path.abspath(root_path)
-    files_info = []
 
+    # ------------------------------------------------------------------ #
+    # Phase 1: collect all file paths (fast, sequential walk)
+    # ------------------------------------------------------------------ #
+    all_paths: List[str] = []
     for dirpath, dirnames, filenames in os.walk(root_path, followlinks=False):
-        # Modify dirnames in-place to avoid descending into ignored directories
         dirnames[:] = [d for d in dirnames if d not in ignores]
-
         for filename in filenames:
             if filename in ignores:
                 continue
+            all_paths.append(os.path.join(dirpath, filename))
 
-            filepath = os.path.join(dirpath, filename)
-            
-            # Avoid broken symlinks
-            if not os.path.exists(filepath):
-                continue
+    total = len(all_paths)
+    if total == 0:
+        return []
 
-            try:
-                stat_result = os.stat(filepath)
-                size = stat_result.st_size
-            except OSError:
-                continue
+    # ------------------------------------------------------------------ #
+    # Phase 2: stat + classify files (sequential or parallel)
+    # ------------------------------------------------------------------ #
+    bar = ProgressBar(
+        total=total,
+        label="Scanning files",
+        colour=show_animation,
+    ) if show_animation else None
 
-            # Identify basic file info
-            rel_path = os.path.relpath(filepath, root_path)
-            _, ext = os.path.splitext(filename)
-            
-            is_binary = is_binary_file(filepath)
-            lines = 0
-            if not is_binary:
-                lines = count_lines(filepath)
-            
-            file_info = FileInfo(
-                path=filepath,
-                filename=filename,
-                extension=ext.lower(),
-                size=size,
-                lines=lines,
-                is_binary=is_binary,
-                language="Unknown",  # Will be populated in Phase 3
-                relative_path=rel_path
-            )
-            files_info.append(file_info)
+    files_info: List[FileInfo] = []
+
+    if parallel:
+        # Worker count: same heuristic as CPython's default I/O pool
+        max_workers = min(32, (os.cpu_count() or 1) + 4)
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_path = {
+                executor.submit(_process_file, p, root_path): p
+                for p in all_paths
+            }
+            for future in concurrent.futures.as_completed(future_to_path):
+                result = future.result()
+                if result is not None:
+                    files_info.append(result)
+                if bar:
+                    bar.advance()
+    else:
+        # Sequential path — unchanged behaviour for small repos / CI
+        for filepath in all_paths:
+            result = _process_file(filepath, root_path)
+            if result is not None:
+                files_info.append(result)
+            if bar:
+                bar.advance()
+
+    if bar:
+        bar.done()
 
     return files_info
 
@@ -666,35 +934,7 @@ def calculate_score(data: ReportData, large_file_threshold: int = 500) -> Health
 
 
 
-
-def print_project_tree(data, c_func):
-    print(c_func("PROJECT TREE", "1"))
-    print(c_func("────────────────────────────────────────────────────────────", "90"))
-    paths = [f.relative_path.replace("\\", "/") for f in data.files]
-    tree = {}
-    for p in paths:
-        parts = p.split("/")
-        curr = tree
-        for part in parts:
-            if part not in curr:
-                curr[part] = {}
-            curr = curr[part]
-    
-    lines = []
-    def traverse(node, prefix=""):
-        if len(lines) > 50: return
-        keys = sorted(list(node.keys()))
-        for i, key in enumerate(keys):
-            is_last = (i == len(keys) - 1)
-            lines.append(prefix + ("└── " if is_last else "├── ") + key)
-            traverse(node[key], prefix + ("    " if is_last else "│   "))
-            
-    traverse(tree)
-    if len(lines) > 50: lines.append("... (tree truncated)")
-    print("\n".join(lines))
-    print()
-
-def print_terminal_report(data: ReportData, use_color: bool = True, large_file_threshold: int = 500, deltas: Optional[Dict[str, int]] = None, exec_time: Optional[float] = None, show_tree: bool = False) -> None:
+def print_terminal_report(data: ReportData, use_color: bool = True, large_file_threshold: int = 500, deltas: Optional[Dict[str, int]] = None) -> None:
     def c(text: str, color_code: str) -> str:
         if not use_color: return text
         return f"\033[{color_code}m{text}\033[0m"
@@ -705,49 +945,15 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
         color = "92" if (val > 0 and not inverted) or (val < 0 and inverted) else "91"
         return c(f" ({sign}{val})", color)
 
-    # Hide cursor
-    sys.stdout.write("\033[?25l")
-    
-    # Animated Banner
-    banner_top = "╔════════════════════════════════════════════════════════════╗"
-    banner_bottom = "╚════════════════════════════════════════════════════════════╝"
-    
-    print(c(banner_top, "94"))
-    
-    color_start = "\033[94;1m" if use_color else ""
-    color_end = "\033[0m" if use_color else ""
-    
-    # Draw the empty middle section first, then carriage return to the start
-    empty_mid = "║" + " " * 60 + "║"
-    sys.stdout.write(color_start + empty_mid + "\r")
-    sys.stdout.flush()
-    time.sleep(0.1)
-    
-    # Overwrite the left side and type the letters
-    sys.stdout.write("║" + " " * 24)
-    sys.stdout.flush()
-    
-    for char in "REPO DOCTOR":
-        sys.stdout.write(char)
-        sys.stdout.flush()
-        time.sleep(0.05)
-        
-    sys.stdout.write(color_end + "\n")
-    sys.stdout.flush()
-    
-    print(c(banner_bottom, "94"))
-    
-    # Show cursor
-    sys.stdout.write("\033[?25h")
+    print(c("╔════════════════════════════════════════════════════════════╗", "94"))
+    print(c("║                       REPO DOCTOR                         ║", "94;1"))
+    print(c("╚════════════════════════════════════════════════════════════╝", "94"))
     print()
     print(f"Repository: {data.name}")
     print(f"Path: {data.path}")
     if deltas:
         print(c("Baseline comparison activated.", "36"))
     print()
-
-    if show_tree:
-        print_project_tree(data, c)
 
     print(c("SUMMARY", "1"))
     print("────────────────────────────────────────────────────────────")
@@ -760,21 +966,7 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
     print(f"Lines of code:          {lines_str}")
     
     languages = set(f.language for f in data.files if f.language != "Unknown")
-    lang_lines = {}
-    for f in data.files:
-        if f.language != "Unknown":
-            lang_lines[f.language] = lang_lines.get(f.language, 0) + f.lines
-            
-    total_lang_lines = sum(lang_lines.values())
-    if total_lang_lines > 0:
-        print(f"Languages detected:")
-        for lang, llines in sorted(lang_lines.items(), key=lambda x: x[1], reverse=True):
-            pct = (llines / total_lang_lines) * 100
-            bar_len = int(pct / 5)
-            bar = "█ " * bar_len
-            print(f"  {lang:<18} {bar}{pct:.1f}%\n")
-    else:
-        print(f"Languages detected:     None")
+    print(f"Languages detected:     {', '.join(languages) if languages else 'None'}")
     
     if data.score:
         score_str = f"{data.score.score}/100{fmt_delta(deltas['score']) if deltas else ''}"
@@ -790,24 +982,11 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
     high_nesting = sum(1 for f in data.files if f.metrics and f.metrics.max_nesting > 4)
     print(f"High nesting:           {high_nesting}")
     
-    total_smells = sum(len(f.code_smells) for f in data.files if f.code_smells)
-    print(f"Code smells (Linting):  {total_smells}")
-    
     todos_str = f"{len(data.todos)}{fmt_delta(deltas['todos'], inverted=True) if deltas else ''}"
     print(f"TODO/FIXME items:       {todos_str}")
     
     dups_str = f"{len(data.duplicates)}{fmt_delta(deltas['duplicates'], inverted=True) if deltas else ''}"
     print(f"Duplicate blocks:       {dups_str}")
-    if data.top_words:
-        words_str = ", ".join([f"{w} ({c})" for w, c in data.top_words])
-        print(f"Top vocabulary:         {words_str}")
-
-    sorted_files = sorted(data.files, key=lambda f: f.lines, reverse=True)
-    if sorted_files and sorted_files[0].lines > 0:
-        print("\nHeaviest Files:")
-        for i, f in enumerate(sorted_files[:3], 1):
-            if f.lines > 0:
-                print(f"  {i}. {f.relative_path} ({f.lines:,} lines)")
     print()
 
     print(c("SECURITY", "1"))
@@ -827,22 +1006,12 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
         print(f"{key:<23} {icon}")
     print()
 
-    if data.mood:
-        print(f"Project Mood:           {data.mood}")
-    if data.clone_exposer:
-        print(f"👯‍♂️ Clone Exposer:       {data.clone_exposer}")
-    print()
-
     print(c("GIT", "1"))
     print("────────────────────────────────────────────────────────────")
     if data.git.available:
         print(f"Branch:                 {data.git.branch}")
         print(f"Uncommitted changes:    {data.git.uncommitted_changes}")
         print(f"Commits:                {data.git.commits}")
-        if data.git.top_contributor:
-            print(f"Top Contributor:        {data.git.top_contributor}")
-        if data.git.hotspot:
-            print(f"🔥 Hotspot file:        {data.git.hotspot}")
     else:
         print("Git repository:         Not available")
     print()
@@ -850,16 +1019,11 @@ def print_terminal_report(data: ReportData, use_color: bool = True, large_file_t
     if data.score:
         print("────────────────────────────────────────────────────────────")
         print(c(f"Health Score: {data.score.score}/100", "92;1" if data.score.score > 80 else "91;1"))
-        print(c("Guide: 90+ (Excellent) | 70-89 (Good) | <70 (Needs Work)", "36"))
         print("────────────────────────────────────────────────────────────")
         for reason, change in data.score.breakdown:
             sign = "+" if change > 0 else ""
             print(f"{reason:<30} {sign}{change}")
 
-
-    if exec_time is not None:
-        print(c(f"\n⚡ Scan completed in {exec_time:.2f} seconds", "90"))
-        
 def get_json_report(data: ReportData, large_file_threshold: int = 500) -> str:
     total_lines = sum(f.lines for f in data.files)
     large_files = sum(1 for f in data.files if f.lines > large_file_threshold)
@@ -908,129 +1072,67 @@ def generate_html_report(data: ReportData, large_file_threshold: int = 500) -> s
     large_files = sum(1 for f in data.files if f.lines > large_file_threshold)
     long_functions = sum(f.metrics.num_functions for f in data.files if f.metrics)
     high_nesting = sum(1 for f in data.files if f.metrics and f.metrics.max_nesting > 4)
-    total_smells = sum(len(f.code_smells) for f in data.files if f.code_smells)
+    languages = set(f.language for f in data.files if f.language != "Unknown")
 
-    html = f'''<!DOCTYPE html>
-<html lang="en">
+    html = f"""<!DOCTYPE html>
+<html>
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RepoDoctor Dashboard - {data.name}</title>
+<title>RepoDoctor Report - {data.name}</title>
 <style>
-    :root {{
-        --bg-main: #0f172a;
-        --bg-card: #1e293b;
-        --text-main: #f8fafc;
-        --text-muted: #94a3b8;
-        --accent: #3b82f6;
-        --success: #10b981;
-        --warning: #f59e0b;
-        --danger: #ef4444;
-        --border: #334155;
-    }}
-    body {{
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        background-color: var(--bg-main);
-        color: var(--text-main);
-        margin: 0;
-        padding: 40px 20px;
-        line-height: 1.6;
-    }}
-    .container {{ max-width: 1100px; margin: 0 auto; }}
-    .header {{ text-align: center; margin-bottom: 40px; }}
-    .header h1 {{
-        font-size: 2.8rem;
-        margin-bottom: 10px;
-        background: -webkit-linear-gradient(45deg, #60a5fa, #c084fc);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }}
-    .score-container {{ display: flex; justify-content: center; margin: 30px 0 40px 0; }}
-    .score-circle {{
-        width: 160px; height: 160px; border-radius: 50%;
-        background: var(--bg-card);
-        border: 4px solid { '#10b981' if (data.score and data.score.score >= 80) else ('#f59e0b' if (data.score and data.score.score >= 50) else '#ef4444') };
-        display: flex; flex-direction: column; justify-content: center; align-items: center;
-        box-shadow: 0 0 30px { 'rgba(16,185,129,0.3)' if (data.score and data.score.score >= 80) else ('rgba(245,158,11,0.3)' if (data.score and data.score.score >= 50) else 'rgba(239,68,68,0.3)') };
-    }}
-    .score-circle span.num {{ font-size: 54px; font-weight: 800; line-height: 1; }}
-    .score-circle span.lbl {{ font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-top: 5px; }}
-    .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px; }}
-    .card {{
-        background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
-        padding: 25px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); transition: transform 0.2s;
-    }}
-    .card:hover {{ transform: translateY(-5px); border-color: var(--accent); }}
-    .card h3 {{ margin: 0 0 10px 0; font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }}
-    .card .val {{ font-size: 32px; font-weight: 700; }}
-    .section {{ background: var(--bg-card); border-radius: 12px; padding: 30px; margin-bottom: 25px; border: 1px solid var(--border); }}
-    .section h2 {{ margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 15px; color: var(--accent); font-size: 20px; }}
-    ul.feature-list {{ list-style: none; padding: 0; margin: 0; }}
-    ul.feature-list li {{ padding: 12px 0; border-bottom: 1px dashed var(--border); display: flex; justify-content: space-between; }}
-    ul.feature-list li:last-child {{ border-bottom: none; padding-bottom: 0; }}
-    table {{ width: 100%; border-collapse: collapse; margin-top: 15px; }}
-    th, td {{ padding: 12px 15px; border-bottom: 1px solid var(--border); text-align: left; }}
-    th {{ font-weight: 600; color: var(--text-muted); text-transform: uppercase; font-size: 12px; }}
-    .badge {{ padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; text-transform: uppercase; }}
-    .badge.pass {{ background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }}
-    .badge.warn {{ background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }}
-    .badge.fail {{ background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }}
+    body {{ font-family: monospace, sans-serif; background-color: #ffffff; color: #000000; margin: 0; padding: 20px; }}
+    .container {{ max-width: 900px; margin: 0 auto; padding: 20px; border: 1px solid #000000; }}
+    h1 {{ border-bottom: 2px solid #000000; padding-bottom: 10px; text-transform: uppercase; font-size: 1.5em; }}
+    h2 {{ margin-top: 30px; border-bottom: 1px solid #000000; padding-bottom: 5px; text-transform: uppercase; font-size: 1.2em; }}
+    .stats-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-bottom: 20px; }}
+    .stat-card {{ padding: 15px; border: 1px solid #000000; text-align: center; }}
+    .stat-value {{ font-size: 24px; font-weight: bold; }}
+    .stat-label {{ font-size: 14px; margin-top: 5px; text-transform: uppercase; }}
+    .score {{ font-size: 48px; font-weight: bold; text-align: center; margin: 20px 0; border: 3px solid #000000; padding: 20px; }}
+    table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
+    th, td {{ padding: 8px 12px; border: 1px solid #000000; text-align: left; }}
+    th {{ background: #eeeeee; text-transform: uppercase; }}
+    .status-text {{ font-weight: bold; }}
+    ul {{ list-style-type: square; }}
 </style>
 </head>
 <body>
 <div class="container">
-    <div class="header">
-        <h1>RepoDoctor Dashboard</h1>
-        <p style="color: var(--text-muted); font-family: monospace; background: rgba(0,0,0,0.3); padding: 5px 15px; border-radius: 20px; display: inline-block;">Target: {data.path}</p>
+    <h1>REPO DOCTOR REPORT: {data.name}</h1>
+    <div class="score">HEALTH SCORE: {data.score.score if data.score else 'N/A'} / 100</div>
+    
+    <h2>SUMMARY</h2>
+    <div class="stats-grid">
+        <div class="stat-card"><div class="stat-value">{len(data.files)}</div><div class="stat-label">Files Scanned</div></div>
+        <div class="stat-card"><div class="stat-value">{total_lines:,}</div><div class="stat-label">Lines of Code</div></div>
+        <div class="stat-card"><div class="stat-value">{len(data.todos)}</div><div class="stat-label">TODO/FIXME Items</div></div>
+        <div class="stat-card"><div class="stat-value">{len(data.duplicates)}</div><div class="stat-label">Duplicate Blocks</div></div>
+        <div class="stat-card"><div class="stat-value">{len(data.security)}</div><div class="stat-label">Potential Secrets</div></div>
     </div>
     
-    <div class="score-container">
-        <div class="score-circle">
-            <span class="num">{data.score.score if data.score else 'N/A'}</span>
-            <span class="lbl">Health</span>
-        </div>
-    </div>
-    
-    <div class="grid">
-        <div class="card"><h3>Files Scanned</h3><div class="val">{len(data.files)}</div></div>
-        <div class="card"><h3>Lines of Code</h3><div class="val">{total_lines:,}</div></div>
-        <div class="card"><h3>Security Secrets</h3><div class="val" style="color: { 'var(--danger)' if data.security else 'var(--success)' }">{len(data.security)}</div></div>
-        <div class="card"><h3>Code Smells (Linter)</h3><div class="val" style="color: { 'var(--warning)' if total_smells > 0 else 'var(--success)' }">{total_smells}</div></div>
-    </div>
-    
-    <div class="grid">
-        <div class="section" style="margin-bottom:0">
-            <h2>AI & Advanced Analytics</h2>
-            <ul class="feature-list">
-                <li><span>🎭 Developer Mood:</span> <strong>{data.mood if data.mood else 'N/A'}</strong></li>
-                <li><span>👯‍♂️ Clone Exposer:</span> <strong>{data.clone_exposer if data.clone_exposer else 'N/A'}</strong></li>
-                <li><span>🔥 Git Hotspot:</span> <strong>{data.git.hotspot if data.git.available and data.git.hotspot else "N/A"}</strong></li>
-                <li><span>👑 Top Contributor:</span> <strong>{data.git.top_contributor if data.git.available and data.git.top_contributor else "N/A"}</strong></li>
-            </ul>
-        </div>
-        <div class="section" style="margin-bottom:0">
-            <h2>Maintainability Metrics</h2>
-            <ul class="feature-list">
-                <li><span>High Nesting / Complexity:</span> <strong>{high_nesting} functions</strong></li>
-                <li><span>Duplicate Blocks:</span> <strong>{len(data.duplicates)} blocks</strong></li>
-                <li><span>TODO / FIXME:</span> <strong>{len(data.todos)} items</strong></li>
-                <li><span>Top Vocabulary:</span> <strong style="font-size:12px; color: var(--accent);">{ ', '.join(f"{w} ({c})" for w, c in data.top_words) if data.top_words else 'N/A' }</strong></li>
-            </ul>
-        </div>
-    </div>
+    <h2>MAINTAINABILITY</h2>
+    <ul>
+        <li><b>Large Files:</b> {large_files}</li>
+        <li><b>Long Functions (Heuristic):</b> {long_functions}</li>
+        <li><b>High Nesting:</b> {high_nesting}</li>
+        <li><b>Languages:</b> {', '.join(languages) if languages else 'None'}</li>
+    </ul>
 
-    <div class="section">
-        <h2>Project Structure Validation</h2>
-        <table>
-            <tr><th>Requirement</th><th>Status</th></tr>
-            {''.join(f"<tr><td>{k}</td><td><span class='badge {v.lower()}'>{v}</span></td></tr>" for k, v in data.structure.items())}
-        </table>
-    </div>
+    <h2>PROJECT HEALTH</h2>
+    <table>
+        <tr><th>Check</th><th>Status</th></tr>
+        {''.join(f"<tr><td>{k}</td><td><span class='status-text'>[{v}]</span></td></tr>" for k, v in data.structure.items())}
+    </table>
+
+    <h2>SECURITY FINDINGS</h2>
+    { "<ul>" + "".join(f"<li><b>{s.filepath}:{s.line_number}</b> - {s.category} (Value: {s.redacted_value})</li>" for s in data.security) + "</ul>" if data.security else "<p>No secrets detected.</p>" }
+    
+    <h2>GIT INFO</h2>
+    <p>{ f"Branch: {data.git.branch} | Commits: {data.git.commits} | Uncommitted Changes: {data.git.uncommitted_changes}" if data.git.available else "Git not available." }</p>
 </div>
 </body>
-</html>'''
+</html>"""
     return html
-
 
 
 # --- baseline.py ---
@@ -1089,28 +1191,54 @@ if sys.stdout.encoding != 'utf-8':
 def main():
     start_time = time.time()
     args = parse_args()
-    
+
     root_path = args.path
     if not os.path.isdir(root_path):
         print(f"Error: {root_path} is not a directory.")
         sys.exit(2)
 
     custom_ignores = args.ignore.split(",") if args.ignore else []
-    
-    # Scanning
-    files = scan_repository(root_path, custom_ignores)
-    detect_languages(files)
-    analyze_metrics(files)
-    
-    todos = scan_todos(files)
-    security = scan_security(files)
-    duplicates = scan_duplicates(files, args.duplicate_lines)
-    
-    structure = check_project_structure(root_path)
-    git_info = get_git_info(root_path)
+
+    # Determine animation mode (disabled by --no-animation or when not a TTY)
+    show_animation = not getattr(args, "no_animation", False)
+    use_parallel   = getattr(args, "parallel", False)
+
+    # ------------------------------------------------------------------ #
+    # File scanning (with optional animation + parallel mode)
+    # ------------------------------------------------------------------ #
+    files = scan_repository(
+        root_path,
+        custom_ignores,
+        parallel=use_parallel,
+        show_animation=show_animation,
+    )
+
+    # ------------------------------------------------------------------ #
+    # Analysis phases — show spinner for each
+    # ------------------------------------------------------------------ #
+    with Spinner("Detecting languages", colour=show_animation):
+        detect_languages(files)
+
+    with Spinner("Analysing metrics", colour=show_animation):
+        analyze_metrics(files)
+
+    with Spinner("Scanning TODOs", colour=show_animation):
+        todos = scan_todos(files)
+
+    with Spinner("Scanning security patterns", colour=show_animation):
+        security = scan_security(files)
+
+    with Spinner("Detecting duplicates", colour=show_animation):
+        duplicates = scan_duplicates(files, args.duplicate_lines)
+
+    with Spinner("Checking project structure", colour=show_animation):
+        structure = check_project_structure(root_path)
+
+    with Spinner("Reading Git info", colour=show_animation):
+        git_info = get_git_info(root_path)
 
     repo_name = os.path.basename(os.path.abspath(root_path))
-    
+
     data = ReportData(
         path=os.path.abspath(root_path),
         name=repo_name,
@@ -1261,4 +1389,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

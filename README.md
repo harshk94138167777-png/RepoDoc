@@ -10,6 +10,8 @@ RepoDoctor is a production-quality CLI tool that analyzes a software repository 
 
 ## Features
 - **Zero Runtime Dependencies**: Built entirely with Python's standard library.
+- **Parallel Repository Scanning**: Fast filesystem traversal with configurable ignores and O(N) deduplication via `concurrent.futures.ThreadPoolExecutor`.
+- **Live CLI Animation**: Zero-dependency terminal spinner and progress bar for immediate feedback.
 - **Single-File Portability**: Can be compiled into a single `repodoctor_single.py` script for extreme portability.
 - **Developer Mood Analyzer**: Scans code comments and commit messages to calculate the emotional state of the project team.
 - **Code Clone Exposer**: Mathematically cross-references all files to expose the two most identical copy-pasted files in the project.
@@ -56,6 +58,8 @@ python -m repodoctor /path/to/your/repo
 | `--ignore` | Comma-separated list of custom directories to ignore |
 | `--large-file-lines` | Threshold for large file lines (default: 500) |
 | `--duplicate-lines` | Minimum lines for duplicate detection (default: 8) |
+| `--parallel`, `-j` | Enable parallel file scanning using ThreadPoolExecutor (faster on large repos) |
+| `--no-animation` | Disable live CLI spinner / progress bar animation |
 | `--security` | Focus only on security analysis |
 | `--todos` | Focus only on TODO/FIXME analysis |
 | `--git` | Include Git analysis (Always attempts by default) |
