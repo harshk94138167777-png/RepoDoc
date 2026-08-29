@@ -1324,14 +1324,14 @@ def generate_html_report(data: ReportData, large_file_threshold: int = 500) -> s
         </table>
     </div>
 
-    <div class="grid">
-        <div class="section">
+    <div>
+        <div class="section" style="width: 100%; box-sizing: border-box;">
             <h2>Top 3 Heaviest Files</h2>
             <ul class="feature-list">
                 {heavy_html}
             </ul>
         </div>
-        <div class="section" style="grid-column: 1 / -1;">
+        <div class="section" style="width: 100%; box-sizing: border-box; overflow-x: auto;">
             <h2>Security Secrets Findings</h2>
             <table>
                 <tr><th>File : Line</th><th>Category</th><th>Redacted Value</th></tr>
