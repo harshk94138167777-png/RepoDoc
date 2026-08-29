@@ -251,17 +251,16 @@ def generate_html_report(data: ReportData, large_file_threshold: int = 500) -> s
     .header h1 {{
         font-size: 2.8rem;
         margin-bottom: 10px;
-        background: -webkit-linear-gradient(45deg, #60a5fa, #c084fc);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: var(--text-main);
+        letter-spacing: -1px;
+        font-weight: 800;
     }}
     .score-container {{ display: flex; justify-content: center; margin: 30px 0 40px 0; }}
     .score-circle {{
         width: 160px; height: 160px; border-radius: 50%;
         background: var(--bg-card);
-        border: 4px solid { '#10b981' if (data.score and data.score.score >= 80) else ('#f59e0b' if (data.score and data.score.score >= 50) else '#ef4444') };
+        border: 2px solid { '#10b981' if (data.score and data.score.score >= 80) else ('#f59e0b' if (data.score and data.score.score >= 50) else '#ef4444') };
         display: flex; flex-direction: column; justify-content: center; align-items: center;
-        box-shadow: 0 0 30px { 'rgba(16,185,129,0.3)' if (data.score and data.score.score >= 80) else ('rgba(245,158,11,0.3)' if (data.score and data.score.score >= 50) else 'rgba(239,68,68,0.3)') };
     }}
     .score-circle span.num {{ font-size: 54px; font-weight: 800; line-height: 1; }}
     .score-circle span.lbl {{ font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-top: 5px; }}
@@ -286,62 +285,9 @@ def generate_html_report(data: ReportData, large_file_threshold: int = 500) -> s
     .badge.warn {{ background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }}
     .badge.fail {{ background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }}
 
-    /* Advanced UI Animations */
-    @keyframes pulse {{
-        0% {{ transform: scale(1); filter: brightness(1); }}
-        50% {{ transform: scale(1.05); filter: brightness(1.2); }}
-        100% {{ transform: scale(1); filter: brightness(1); }}
-    }}
-    @keyframes slideUp {{
-        from {{ opacity: 0; transform: translateY(30px); }}
-        to {{ opacity: 1; transform: translateY(0); }}
-    }}
-    @keyframes float {{
-        0% {{ transform: translateY(0px); }}
-        50% {{ transform: translateY(-8px); }}
-        100% {{ transform: translateY(0px); }}
-    }}
-    @keyframes shimmer {{
-        0% {{ background-position: -200% center; }}
-        100% {{ background-position: 200% center; }}
-    }}
-
-    .header h1 {{
-        animation: float 4s ease-in-out infinite;
-        background-size: 200% auto;
-    }}
-    .score-circle {{
-        animation: pulse 2.5s infinite ease-in-out;
-        transition: transform 0.3s;
-    }}
-    .score-circle:hover {{
-        transform: scale(1.1) !important;
-        cursor: crosshair;
-    }}
-    .card {{
-        opacity: 0;
-        animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }}
-    .card:nth-child(1) {{ animation-delay: 0.1s; }}
-    .card:nth-child(2) {{ animation-delay: 0.2s; }}
-    .card:nth-child(3) {{ animation-delay: 0.3s; }}
-    .card:nth-child(4) {{ animation-delay: 0.4s; }}
-    
-    .section {{
-        opacity: 0;
-        animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        animation-delay: 0.5s;
-    }}
-    
-    .card::before {{
-        content: '';
-        position: absolute;
-        top: 0; left: -100%; width: 50%; height: 100%;
-        background: linear-gradient(to right, transparent, rgba(255,255,255,0.05), transparent);
-        transform: skewX(-20deg);
-        transition: 0.5s;
-    }}
-    .card:hover::before {{ left: 150%; }}
+    /* Classy Transitions */
+    .score-circle {{ transition: transform 0.3s; }}
+    .score-circle:hover {{ transform: scale(1.05); }}
     .card {{ position: relative; overflow: hidden; }}
 </style>
 </head>
