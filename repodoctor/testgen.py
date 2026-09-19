@@ -1,0 +1,232 @@
+"""
+Test file generator using Python standard library only.
+Generates Python unittest test files from source code.
+"""
+
+import ast
+import os
+from pathlib import Path
+from typing import List, Tuple
+
+
+def generate_tests(files: List, verbose: bool = False) -> Tuple[int, List[str]]:
+    """
+    Generate Python unittest test files from source code.
+    
+    Args:
+        files: List of FileInfo objects
+        verbose: Whether to print verbose output
+        
+    Returns:
+        Tuple of (number of test files generated, list of generated file paths)
+    """
+    generated = []
+    
+    for file_info in files:
+        if file_info.language != "Python":
+            continue
+        
+        if file_info.path.endswith('.py') and not file_info.path.startswith('test_'):
+            # Skip if it's already a test file
+            if '/tests/' in file_info.path or '/test/' in file_info.path:
+                continue
+            
+            # Skip __init__.py files
+            if file_info.path.endswith('__init__.py'):
+                continue
+            
+            try:
+                test_file_path = _generate_test_file(file_info.path, verbose)
+                if test_file_path:
+                    generated.append(test_file_path)
+            except Exception as e:
+                if verbose:
+                    print(f"Warning: Could not generate test for {file_info.path}: {e}")
+                continue
+    
+    return len(generated), generated
+
+
+def _generate_test_file(source_path: str, verbose: bool = False) -> str:
+    """Generate a test file for a given source file."""
+    source_file = Path(source_path)
+    
+    # Determine test file location
+    # Try to find or create a 'tests' directory
+    repo_root = _find_repo_root(source_file)
+    tests_dir = repo_root / 'tests'
+    
+    if not tests_dir.exists():
+        tests_dir.mkdir(exist_ok=True)
+        # Create __init__.py in tests directory
+        (tests_dir / '__init__.py').touch()
+    
+    # Generate test file name
+    test_file_name = f"test_{source_file.stem}.py"
+    test_file_path = tests_dir / test_file_name
+    
+    # Skip if test file already exists
+    if test_file_path.exists():
+        if verbose:
+            print(f"  Skipping {test_file_path} (already exists)")
+        return None
+    
+    # Parse the source file to extract functions and classes
+    try:
+        with open(source_path, 'r', encoding='utf-8', errors='ignore') as f:
+            source_code = f.read()
+        
+        tree = ast.parse(source_code)
+        functions, classes = _extract_testable_items(tree)
+        
+        # Skip if nothing to test
+        if not functions and not classes:
+            return None
+        
+        # Generate test content
+        test_content = _generate_test_content(source_file, functions, classes, repo_root)
+        
+        # Write test file
+        with open(test_file_path, 'w', encoding='utf-8') as f:
+            f.write(test_content)
+        
+        if verbose:
+            print(f"  Generated {test_file_path}")
+        
+        return str(test_file_path)
+        
+    except SyntaxError:
+        # Skip files with syntax errors
+        return None
+    except Exception as e:
+        if verbose:
+            print(f"  Error processing {source_path}: {e}")
+        return None
+
+
+def _find_repo_root(file_path: Path) -> Path:
+    """Find the repository root directory."""
+    current = file_path.parent
+    
+    # Look for common indicators of project root
+    while current != current.parent:
+        indicators = ['.git', 'setup.py', 'pyproject.toml', 'requirements.txt']
+        for indicator in indicators:
+            if (current / indicator).exists():
+                return current
+        current = current.parent
+    
+    # Default to parent of the file
+    return file_path.parent
+
+
+def _extract_testable_items(tree: ast.AST) -> Tuple[List[str], List[str]]:
+    """Extract function and class names from AST."""
+    functions = []
+    classes = []
+    
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            # Only include top-level functions and public methods
+            if not node.name.startswith('_'):
+                functions.append(node.name)
+        elif isinstance(node, ast.ClassDef):
+            if not node.name.startswith('_'):
+                classes.append(node.name)
+    
+    return functions, classes
+
+
+def _generate_test_content(source_file: Path, functions: List[str], classes: List[str], repo_root: Path) -> str:
+    """Generate the content of a test file."""
+    
+    # Calculate relative import path
+    relative_path = source_file.relative_to(repo_root)
+    module_path = str(relative_path.with_suffix('')).replace(os.sep, '.')
+    
+    lines = []
+    lines.append('"""')
+    lines.append(f'Unit tests for {source_file.name}')
+    lines.append('Generated by RepoDoctor')
+    lines.append('"""')
+    lines.append('')
+    lines.append('import unittest')
+    lines.append('')
+    
+    # Import the module being tested
+    if functions:
+        func_imports = ', '.join(functions[:5])  # Limit to first 5
+        lines.append(f'from {module_path} import {func_imports}')
+    
+    if classes:
+        class_imports = ', '.join(classes[:5])  # Limit to first 5
+        lines.append(f'from {module_path} import {class_imports}')
+    
+    lines.append('')
+    lines.append('')
+    
+    # Generate test class for functions
+    if functions:
+        lines.append('class TestFunctions(unittest.TestCase):')
+        lines.append('    """Test functions from the module."""')
+        lines.append('')
+        
+        for func_name in functions[:10]:  # Limit to 10 functions
+            lines.append(f'    def test_{func_name}(self):')
+            lines.append(f'        """Test {func_name} function."""')
+            lines.append(f'        # TODO: Implement test for {func_name}')
+            lines.append(f'        result = {func_name}()')
+            lines.append('        self.assertIsNotNone(result)')
+            lines.append('')
+        
+        lines.append('')
+    
+    # Generate test class for each class
+    for class_name in classes[:10]:  # Limit to 10 classes
+        lines.append(f'class Test{class_name}(unittest.TestCase):')
+        lines.append(f'    """Test {class_name} class."""')
+        lines.append('')
+        lines.append('    def setUp(self):')
+        lines.append(f'        """Set up test fixtures for {class_name}."""')
+        lines.append(f'        self.instance = {class_name}()')
+        lines.append('')
+        lines.append('    def test_instantiation(self):')
+        lines.append(f'        """Test that {class_name} can be instantiated."""')
+        lines.append('        self.assertIsNotNone(self.instance)')
+        lines.append('')
+        lines.append('    def test_type(self):')
+        lines.append(f'        """Test that instance is of correct type."""')
+        lines.append(f'        self.assertIsInstance(self.instance, {class_name})')
+        lines.append('')
+        lines.append('')
+    
+    # Add main block
+    lines.append('')
+    lines.append('if __name__ == "__main__":')
+    lines.append('    unittest.main()')
+    lines.append('')
+    
+    return '\n'.join(lines)
+
+
+def format_test_generation_report(count: int, generated_files: List[str], use_color: bool = True) -> str:
+    """Format the test generation report."""
+    def color(text, code):
+        return f"\033[{code}m{text}\033[0m" if use_color else text
+    
+    report = []
+    report.append("")
+    report.append(color("Test Generation", "96;1"))
+    report.append(color("───────────────", "90"))
+    
+    if count == 0:
+        report.append(color("✓ No suitable source files found for test generation", "93"))
+    else:
+        report.append(color(f"✓ Generated {count} test file(s)", "92"))
+        report.append("")
+        report.append("Generated files:")
+        for file_path in generated_files:
+            report.append(f"  • {file_path}")
+    
+    report.append("")
+    return '\n'.join(report)

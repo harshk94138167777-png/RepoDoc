@@ -1,0 +1,1318 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-09-19T19:36:57.808275",
+  "repository": {
+    "name": "RepoDoc",
+    "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc",
+    "root_directory": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc"
+  },
+  "statistics": {
+    "total_files": 78,
+    "total_size_bytes": 411365,
+    "total_lines": 8949,
+    "binary_files": 5,
+    "text_files": 73
+  },
+  "languages": {
+    "Python": 58,
+    "Unknown": 16,
+    "Markdown": 3,
+    "YAML": 1
+  },
+  "file_extensions": [
+    ".md",
+    ".pptx",
+    ".py",
+    ".toml",
+    ".txt",
+    ".yml"
+  ],
+  "directory_structure": {
+    "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc": {
+      "file_count": 19,
+      "files": [
+        ".gitignore",
+        "DOCUMENTATION.md",
+        "README.md",
+        "REPOROCTOR_COMPREHENSIVE_AUDIT_AND_ROADMAP.md",
+        "STDLIB.md",
+        "build_single_file.py",
+        "output.txt",
+        "patch_build.py",
+        "patch_git.py",
+        "patch_graph.py",
+        "patch_graph2.py",
+        "patch_main.py",
+        "patch_main2.py",
+        "patch_os2.py",
+        "patch_report.py",
+        "patch_sec.py",
+        "pyproject.toml",
+        "repodoctor_single.py",
+        "setup.py"
+      ]
+    },
+    "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/.github/workflows": {
+      "file_count": 1,
+      "files": [
+        "repodoctor.yml"
+      ]
+    },
+    "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor": {
+      "file_count": 27,
+      "files": [
+        "__init__.py",
+        "__main__.py",
+        "autocommit.py",
+        "autofix.py",
+        "baseline.py",
+        "cli.py",
+        "config.py",
+        "duplicates.py",
+        "git.py",
+        "graph.py",
+        "heatmap.py",
+        "languages.py",
+        "linter.py",
+        "metrics.py",
+        "models.py",
+        "play.py",
+        "report.py",
+        "scanner.py",
+        "schema.py",
+        "scoring.py",
+        "security.py",
+        "slides.py",
+        "spinner.py",
+        "structure.py",
+        "testgen.py",
+        "todos.py",
+        "typos.py"
+      ]
+    },
+    "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor.egg-info": {
+      "file_count": 5,
+      "files": [
+        "PKG-INFO",
+        "SOURCES.txt",
+        "dependency_links.txt",
+        "entry_points.txt",
+        "top_level.txt"
+      ]
+    },
+    "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor_cli.egg-info": {
+      "file_count": 5,
+      "files": [
+        "PKG-INFO",
+        "SOURCES.txt",
+        "dependency_links.txt",
+        "entry_points.txt",
+        "top_level.txt"
+      ]
+    },
+    "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/reports": {
+      "file_count": 1,
+      "files": [
+        "test_slides.pptx"
+      ]
+    },
+    "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests": {
+      "file_count": 20,
+      "files": [
+        "__init__.py",
+        "test_autocommit.py",
+        "test_baseline.py",
+        "test_cli.py",
+        "test_duplicates.py",
+        "test_git.py",
+        "test_heatmap.py",
+        "test_languages.py",
+        "test_metrics.py",
+        "test_packaging.py",
+        "test_parallel.py",
+        "test_scanner.py",
+        "test_schema.py",
+        "test_scoring.py",
+        "test_security.py",
+        "test_slides.py",
+        "test_structure.py",
+        "test_testgen.py",
+        "test_todos.py",
+        "test_typos.py"
+      ]
+    }
+  },
+  "files_by_language": {
+    "Python": [
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/patch_git.py",
+        "size": 2066,
+        "lines": 48,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor_single.py",
+        "size": 77161,
+        "lines": 2099,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/patch_build.py",
+        "size": 337,
+        "lines": 14,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/setup.py",
+        "size": 1264,
+        "lines": 35,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/patch_sec.py",
+        "size": 1059,
+        "lines": 29,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/patch_main2.py",
+        "size": 1711,
+        "lines": 54,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/build_single_file.py",
+        "size": 1787,
+        "lines": 71,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/patch_graph2.py",
+        "size": 767,
+        "lines": 30,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/patch_main.py",
+        "size": 2929,
+        "lines": 88,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/patch_graph.py",
+        "size": 742,
+        "lines": 24,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/patch_report.py",
+        "size": 1829,
+        "lines": 39,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/patch_os2.py",
+        "size": 251,
+        "lines": 11,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_structure.py",
+        "size": 1429,
+        "lines": 38,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_security.py",
+        "size": 1306,
+        "lines": 37,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_packaging.py",
+        "size": 3711,
+        "lines": 108,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_typos.py",
+        "size": 4561,
+        "lines": 145,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_heatmap.py",
+        "size": 4397,
+        "lines": 140,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_metrics.py",
+        "size": 1138,
+        "lines": 32,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_slides.py",
+        "size": 3468,
+        "lines": 96,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_scanner.py",
+        "size": 1437,
+        "lines": 44,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_autocommit.py",
+        "size": 3325,
+        "lines": 89,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_languages.py",
+        "size": 498,
+        "lines": 14,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_testgen.py",
+        "size": 5261,
+        "lines": 169,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_git.py",
+        "size": 1311,
+        "lines": 42,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/__init__.py",
+        "size": 27,
+        "lines": 1,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_scoring.py",
+        "size": 1303,
+        "lines": 31,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_baseline.py",
+        "size": 2021,
+        "lines": 60,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_schema.py",
+        "size": 4359,
+        "lines": 135,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_parallel.py",
+        "size": 3625,
+        "lines": 93,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_todos.py",
+        "size": 962,
+        "lines": 30,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_duplicates.py",
+        "size": 1199,
+        "lines": 38,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_cli.py",
+        "size": 1070,
+        "lines": 28,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/metrics.py",
+        "size": 2633,
+        "lines": 73,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/duplicates.py",
+        "size": 2659,
+        "lines": 69,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/heatmap.py",
+        "size": 10094,
+        "lines": 329,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/git.py",
+        "size": 2493,
+        "lines": 73,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/scanner.py",
+        "size": 5709,
+        "lines": 177,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/config.py",
+        "size": 2486,
+        "lines": 59,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/models.py",
+        "size": 1575,
+        "lines": 82,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/baseline.py",
+        "size": 1497,
+        "lines": 42,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/todos.py",
+        "size": 1026,
+        "lines": 32,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/scoring.py",
+        "size": 1623,
+        "lines": 49,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/graph.py",
+        "size": 1741,
+        "lines": 46,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/security.py",
+        "size": 3041,
+        "lines": 61,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/__init__.py",
+        "size": 25,
+        "lines": 1,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/play.py",
+        "size": 1637,
+        "lines": 56,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/testgen.py",
+        "size": 8053,
+        "lines": 232,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/autocommit.py",
+        "size": 6884,
+        "lines": 222,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/cli.py",
+        "size": 4042,
+        "lines": 67,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/typos.py",
+        "size": 6575,
+        "lines": 184,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/structure.py",
+        "size": 1243,
+        "lines": 40,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/slides.py",
+        "size": 21547,
+        "lines": 504,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/spinner.py",
+        "size": 5496,
+        "lines": 174,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/linter.py",
+        "size": 9891,
+        "lines": 226,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/languages.py",
+        "size": 695,
+        "lines": 33,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/__main__.py",
+        "size": 25724,
+        "lines": 633,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/schema.py",
+        "size": 6500,
+        "lines": 183,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/autofix.py",
+        "size": 1163,
+        "lines": 38,
+        "binary": false
+      }
+    ],
+    "Unknown": [
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/pyproject.toml",
+        "size": 839,
+        "lines": 30,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/.gitignore",
+        "size": 74,
+        "lines": 0,
+        "binary": true
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/REPOROCTOR_COMPREHENSIVE_AUDIT_AND_ROADMAP.md",
+        "size": 31885,
+        "lines": 0,
+        "binary": true
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/output.txt",
+        "size": 8642,
+        "lines": 0,
+        "binary": true
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor.egg-info/PKG-INFO",
+        "size": 6500,
+        "lines": 137,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor.egg-info/SOURCES.txt",
+        "size": 867,
+        "lines": 38,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor.egg-info/entry_points.txt",
+        "size": 56,
+        "lines": 2,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor.egg-info/top_level.txt",
+        "size": 11,
+        "lines": 1,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor.egg-info/dependency_links.txt",
+        "size": 1,
+        "lines": 1,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor_cli.egg-info/PKG-INFO",
+        "size": 6720,
+        "lines": 152,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor_cli.egg-info/SOURCES.txt",
+        "size": 887,
+        "lines": 38,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor_cli.egg-info/entry_points.txt",
+        "size": 56,
+        "lines": 2,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor_cli.egg-info/top_level.txt",
+        "size": 11,
+        "lines": 1,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor_cli.egg-info/dependency_links.txt",
+        "size": 1,
+        "lines": 1,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/report.py",
+        "size": 15714,
+        "lines": 0,
+        "binary": true
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/reports/test_slides.pptx",
+        "size": 13250,
+        "lines": 0,
+        "binary": true
+      }
+    ],
+    "Markdown": [
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/STDLIB.md",
+        "size": 1745,
+        "lines": 43,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/README.md",
+        "size": 7106,
+        "lines": 145,
+        "binary": false
+      },
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/DOCUMENTATION.md",
+        "size": 42236,
+        "lines": 746,
+        "binary": false
+      }
+    ],
+    "YAML": [
+      {
+        "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/.github/workflows/repodoctor.yml",
+        "size": 401,
+        "lines": 15,
+        "binary": false
+      }
+    ]
+  },
+  "modules": {
+    "patch_git": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/patch_git.py",
+      "functions": 0,
+      "classes": 0,
+      "lines": 48,
+      "imports": [
+        "re",
+        "sys"
+      ]
+    },
+    "repodoctor_single": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor_single.py",
+      "functions": 44,
+      "classes": 10,
+      "lines": 2099,
+      "imports": [
+        "argparse",
+        "ast",
+        "collections",
+        "concurrent.futures",
+        "contextlib",
+        "dataclasses",
+        "difflib",
+        "hashlib",
+        "io",
+        "itertools",
+        "json",
+        "os",
+        "pathlib",
+        "re",
+        "subprocess",
+        "sys",
+        "threading",
+        "time",
+        "typing"
+      ]
+    },
+    "patch_build": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/patch_build.py",
+      "functions": 0,
+      "classes": 0,
+      "lines": 14,
+      "imports": [
+        "re",
+        "sys"
+      ]
+    },
+    "setup": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/setup.py",
+      "functions": 0,
+      "classes": 0,
+      "lines": 35,
+      "imports": [
+        "setuptools"
+      ]
+    },
+    "patch_sec": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/patch_sec.py",
+      "functions": 0,
+      "classes": 0,
+      "lines": 29,
+      "imports": [
+        "re",
+        "sys"
+      ]
+    },
+    "patch_main2": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/patch_main2.py",
+      "functions": 0,
+      "classes": 0,
+      "lines": 54,
+      "imports": [
+        "sys"
+      ]
+    },
+    "build_single_file": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/build_single_file.py",
+      "functions": 1,
+      "classes": 0,
+      "lines": 71,
+      "imports": [
+        "os",
+        "re"
+      ]
+    },
+    "patch_graph2": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/patch_graph2.py",
+      "functions": 0,
+      "classes": 0,
+      "lines": 30,
+      "imports": [
+        "re",
+        "sys"
+      ]
+    },
+    "patch_main": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/patch_main.py",
+      "functions": 0,
+      "classes": 0,
+      "lines": 88,
+      "imports": [
+        "os",
+        "re",
+        "sys"
+      ]
+    },
+    "patch_graph": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/patch_graph.py",
+      "functions": 0,
+      "classes": 0,
+      "lines": 24,
+      "imports": [
+        "sys"
+      ]
+    },
+    "patch_report": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/patch_report.py",
+      "functions": 0,
+      "classes": 0,
+      "lines": 39,
+      "imports": [
+        "sys"
+      ]
+    },
+    "patch_os2": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/patch_os2.py",
+      "functions": 0,
+      "classes": 0,
+      "lines": 11,
+      "imports": [
+        "sys"
+      ]
+    },
+    "test_structure": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_structure.py",
+      "functions": 4,
+      "classes": 1,
+      "lines": 38,
+      "imports": [
+        "os",
+        "repodoctor.structure",
+        "shutil",
+        "tempfile",
+        "unittest"
+      ]
+    },
+    "test_security": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_security.py",
+      "functions": 4,
+      "classes": 1,
+      "lines": 37,
+      "imports": [
+        "os",
+        "repodoctor.models",
+        "repodoctor.security",
+        "shutil",
+        "tempfile",
+        "unittest"
+      ]
+    },
+    "test_packaging": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_packaging.py",
+      "functions": 6,
+      "classes": 2,
+      "lines": 108,
+      "imports": [
+        "importlib",
+        "os",
+        "subprocess",
+        "sys",
+        "unittest"
+      ]
+    },
+    "test_typos": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_typos.py",
+      "functions": 8,
+      "classes": 1,
+      "lines": 145,
+      "imports": [
+        "os",
+        "pathlib",
+        "repodoctor.models",
+        "repodoctor.typos",
+        "sys",
+        "tempfile",
+        "unittest"
+      ]
+    },
+    "test_heatmap": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_heatmap.py",
+      "functions": 8,
+      "classes": 1,
+      "lines": 140,
+      "imports": [
+        "os",
+        "pathlib",
+        "repodoctor.heatmap",
+        "repodoctor.models",
+        "sys",
+        "tempfile",
+        "unittest"
+      ]
+    },
+    "test_metrics": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_metrics.py",
+      "functions": 3,
+      "classes": 1,
+      "lines": 32,
+      "imports": [
+        "os",
+        "repodoctor.metrics",
+        "repodoctor.models",
+        "shutil",
+        "tempfile",
+        "unittest"
+      ]
+    },
+    "test_slides": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_slides.py",
+      "functions": 7,
+      "classes": 1,
+      "lines": 96,
+      "imports": [
+        "os",
+        "pathlib",
+        "repodoctor.models",
+        "repodoctor.slides",
+        "sys",
+        "tempfile",
+        "unittest",
+        "zipfile"
+      ]
+    },
+    "test_scanner": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_scanner.py",
+      "functions": 4,
+      "classes": 1,
+      "lines": 44,
+      "imports": [
+        "os",
+        "repodoctor.scanner",
+        "shutil",
+        "tempfile",
+        "unittest"
+      ]
+    },
+    "test_autocommit": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_autocommit.py",
+      "functions": 7,
+      "classes": 1,
+      "lines": 89,
+      "imports": [
+        "os",
+        "pathlib",
+        "repodoctor.autocommit",
+        "subprocess",
+        "sys",
+        "tempfile",
+        "unittest"
+      ]
+    },
+    "test_languages": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_languages.py",
+      "functions": 1,
+      "classes": 1,
+      "lines": 14,
+      "imports": [
+        "repodoctor.languages",
+        "repodoctor.models",
+        "unittest"
+      ]
+    },
+    "test_testgen": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_testgen.py",
+      "functions": 8,
+      "classes": 1,
+      "lines": 169,
+      "imports": [
+        "os",
+        "pathlib",
+        "repodoctor.models",
+        "repodoctor.testgen",
+        "sys",
+        "tempfile",
+        "unittest"
+      ]
+    },
+    "test_git": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_git.py",
+      "functions": 5,
+      "classes": 1,
+      "lines": 42,
+      "imports": [
+        "os",
+        "repodoctor.git",
+        "shutil",
+        "tempfile",
+        "unittest",
+        "unittest.mock"
+      ]
+    },
+    "__init__": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/__init__.py",
+      "functions": 0,
+      "classes": 0,
+      "lines": 1,
+      "imports": []
+    },
+    "test_scoring": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_scoring.py",
+      "functions": 2,
+      "classes": 1,
+      "lines": 31,
+      "imports": [
+        "repodoctor.models",
+        "repodoctor.scoring",
+        "unittest"
+      ]
+    },
+    "test_baseline": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_baseline.py",
+      "functions": 4,
+      "classes": 2,
+      "lines": 60,
+      "imports": [
+        "json",
+        "os",
+        "repodoctor.baseline",
+        "repodoctor.models",
+        "shutil",
+        "tempfile",
+        "unittest"
+      ]
+    },
+    "test_schema": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_schema.py",
+      "functions": 8,
+      "classes": 1,
+      "lines": 135,
+      "imports": [
+        "json",
+        "os",
+        "pathlib",
+        "repodoctor.models",
+        "repodoctor.schema",
+        "sys",
+        "tempfile",
+        "unittest"
+      ]
+    },
+    "test_parallel": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_parallel.py",
+      "functions": 9,
+      "classes": 1,
+      "lines": 93,
+      "imports": [
+        "concurrent.futures",
+        "os",
+        "repodoctor.scanner",
+        "shutil",
+        "sys",
+        "tempfile",
+        "unittest",
+        "unittest.mock"
+      ]
+    },
+    "test_todos": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_todos.py",
+      "functions": 3,
+      "classes": 1,
+      "lines": 30,
+      "imports": [
+        "os",
+        "repodoctor.models",
+        "repodoctor.todos",
+        "shutil",
+        "tempfile",
+        "unittest"
+      ]
+    },
+    "test_duplicates": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_duplicates.py",
+      "functions": 3,
+      "classes": 1,
+      "lines": 38,
+      "imports": [
+        "os",
+        "repodoctor.duplicates",
+        "repodoctor.models",
+        "shutil",
+        "tempfile",
+        "unittest"
+      ]
+    },
+    "test_cli": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/tests/test_cli.py",
+      "functions": 2,
+      "classes": 1,
+      "lines": 28,
+      "imports": [
+        "repodoctor.cli",
+        "unittest"
+      ]
+    },
+    "metrics": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/metrics.py",
+      "functions": 2,
+      "classes": 0,
+      "lines": 73,
+      "imports": [
+        "ast",
+        "re",
+        "typing"
+      ]
+    },
+    "duplicates": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/duplicates.py",
+      "functions": 2,
+      "classes": 0,
+      "lines": 69,
+      "imports": [
+        "collections",
+        "hashlib",
+        "typing"
+      ]
+    },
+    "heatmap": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/heatmap.py",
+      "functions": 3,
+      "classes": 0,
+      "lines": 329,
+      "imports": [
+        "html",
+        "pathlib",
+        "typing"
+      ]
+    },
+    "git": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/git.py",
+      "functions": 2,
+      "classes": 0,
+      "lines": 73,
+      "imports": [
+        "collections",
+        "os",
+        "subprocess"
+      ]
+    },
+    "scanner": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/scanner.py",
+      "functions": 4,
+      "classes": 0,
+      "lines": 177,
+      "imports": [
+        "concurrent.futures",
+        "os",
+        "pathlib",
+        "typing"
+      ]
+    },
+    "config": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/config.py",
+      "functions": 1,
+      "classes": 0,
+      "lines": 59,
+      "imports": [
+        "json",
+        "os",
+        "re",
+        "tomllib"
+      ]
+    },
+    "models": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/models.py",
+      "functions": 0,
+      "classes": 8,
+      "lines": 82,
+      "imports": [
+        "dataclasses",
+        "typing"
+      ]
+    },
+    "baseline": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/baseline.py",
+      "functions": 1,
+      "classes": 0,
+      "lines": 42,
+      "imports": [
+        "json",
+        "os",
+        "typing"
+      ]
+    },
+    "todos": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/todos.py",
+      "functions": 1,
+      "classes": 0,
+      "lines": 32,
+      "imports": [
+        "re",
+        "typing"
+      ]
+    },
+    "scoring": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/scoring.py",
+      "functions": 1,
+      "classes": 0,
+      "lines": 49,
+      "imports": []
+    },
+    "graph": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/graph.py",
+      "functions": 1,
+      "classes": 0,
+      "lines": 46,
+      "imports": [
+        "collections",
+        "os",
+        "re"
+      ]
+    },
+    "security": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/security.py",
+      "functions": 2,
+      "classes": 0,
+      "lines": 61,
+      "imports": [
+        "re",
+        "typing"
+      ]
+    },
+    "play": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/play.py",
+      "functions": 1,
+      "classes": 0,
+      "lines": 56,
+      "imports": [
+        "os",
+        "pathlib",
+        "subprocess",
+        "sys"
+      ]
+    },
+    "testgen": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/testgen.py",
+      "functions": 7,
+      "classes": 0,
+      "lines": 232,
+      "imports": [
+        "ast",
+        "os",
+        "pathlib",
+        "typing"
+      ]
+    },
+    "autocommit": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/autocommit.py",
+      "functions": 9,
+      "classes": 0,
+      "lines": 222,
+      "imports": [
+        "os",
+        "pathlib",
+        "subprocess",
+        "typing"
+      ]
+    },
+    "cli": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/cli.py",
+      "functions": 2,
+      "classes": 0,
+      "lines": 67,
+      "imports": [
+        "argparse",
+        "sys"
+      ]
+    },
+    "typos": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/typos.py",
+      "functions": 5,
+      "classes": 1,
+      "lines": 184,
+      "imports": [
+        "pathlib",
+        "re",
+        "typing"
+      ]
+    },
+    "structure": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/structure.py",
+      "functions": 1,
+      "classes": 0,
+      "lines": 40,
+      "imports": [
+        "os",
+        "typing"
+      ]
+    },
+    "slides": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/slides.py",
+      "functions": 19,
+      "classes": 0,
+      "lines": 504,
+      "imports": [
+        "datetime",
+        "pathlib",
+        "typing",
+        "xml.etree.ElementTree",
+        "zipfile"
+      ]
+    },
+    "spinner": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/spinner.py",
+      "functions": 12,
+      "classes": 2,
+      "lines": 174,
+      "imports": [
+        "itertools",
+        "sys",
+        "threading",
+        "time"
+      ]
+    },
+    "linter": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/linter.py",
+      "functions": 1,
+      "classes": 0,
+      "lines": 226,
+      "imports": [
+        "ast",
+        "re"
+      ]
+    },
+    "languages": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/languages.py",
+      "functions": 1,
+      "classes": 0,
+      "lines": 33,
+      "imports": [
+        "typing"
+      ]
+    },
+    "__main__": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/__main__.py",
+      "functions": 3,
+      "classes": 0,
+      "lines": 633,
+      "imports": [
+        "collections",
+        "concurrent.futures",
+        "contextlib",
+        "difflib",
+        "io",
+        "json",
+        "os",
+        "re",
+        "sys",
+        "time",
+        "traceback"
+      ]
+    },
+    "schema": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/schema.py",
+      "functions": 4,
+      "classes": 0,
+      "lines": 183,
+      "imports": [
+        "datetime",
+        "json",
+        "os",
+        "pathlib",
+        "typing"
+      ]
+    },
+    "autofix": {
+      "path": "/Users/tanishjain/carrer/mainprojects/repodoc/RepoDoc/repodoctor/autofix.py",
+      "functions": 1,
+      "classes": 0,
+      "lines": 38,
+      "imports": [
+        "os",
+        "re",
+        "typing"
+      ]
+    }
+  },
+  "metadata": {
+    "has_readme": true,
+    "has_tests": true,
+    "has_gitignore": true,
+    "has_license": false,
+    "is_git_repo": true,
+    "git_branch": "feat-v2-enterprise"
+  }
+}

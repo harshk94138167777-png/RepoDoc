@@ -7,7 +7,7 @@ def build_parser() -> argparse.ArgumentParser:
         description="RepoDoctor diagnoses a codebase for maintainability, security, duplication, project-structure and Git issues using only the language standard library.",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    
+
     parser.add_argument(
         "path",
         help="Path to the repository to analyze",
@@ -42,6 +42,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--fix", action="store_true", help="Auto-fix safe code smells and formatting issues")
     parser.add_argument("--graph", action="store_true", help="Generate an ASCII dependency graph")
     
+    # New feature flags
+    parser.add_argument("--slides", type=str, metavar="FILE", help="Generate PowerPoint presentation with repository analysis", default="")
+    parser.add_argument("--play", type=str, metavar="FILE", help="Open and view a generated report file", default="")
+    parser.add_argument("--schema", type=str, metavar="FILE", help="Generate JSON schema describing repository structure", default="")
+    parser.add_argument("--test", action="store_true", help="Generate Python unittest test files from source code")
+    parser.add_argument("--typo", action="store_true", help="Scan for potential typos in code and documentation")
+    parser.add_argument("--heatmap", type=str, metavar="FILE", help="Generate HTML/SVG heatmap visualization", default="")
+    parser.add_argument("--auto-commit", action="store_true", help="Automatically commit RepoDoctor changes to Git")
+    parser.add_argument("--debug", action="store_true", help="Enable debug mode with detailed error tracebacks")
+
     try:
         from importlib.metadata import version
         __version__ = version("repodoctor-cli")

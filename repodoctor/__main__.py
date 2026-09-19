@@ -298,8 +298,57 @@ def process_single_repo(root_path, args, idx, custom_ignores, use_parallel, show
     }
 
 def main():
+    """Main entry point with comprehensive error handling."""
     start_time = time.time()
-    args = parse_args()
+    
+    # Import scanner early for feature handling
+    from .scanner import scan_repository
+    from .languages import detect_languages
+    from .metrics import analyze_metrics
+    from .todos import scan_todos
+    from .security import scan_security
+    from .duplicates import scan_duplicates
+    from .structure import check_project_structure
+    from .git import get_git_info
+    from .scoring import calculate_score
+    
+    try:
+        args = parse_args()
+    except SystemExit as e:
+        # argparse calls sys.exit() on error or --help
+        raise
+    except KeyboardInterrupt:
+        print("\nRepoDoctor: operation cancelled by user.")
+        sys.exit(130)
+    except Exception as e:
+        print(f"RepoDoctor Error: {e}")
+        sys.exit(2)
+
+    # Handle special features that run independently
+    # --play: Open a report file (early exit)
+    if getattr(args, 'play', None):
+        from .play import play_file
+        success = play_file(args.play)
+        sys.exit(0 if success else 1)
+    
+    # --typo: Scan for typos (early exit)
+    if getattr(args, 'typo', False):
+        from .typos import scan_typos, format_typo_report
+        
+        root_path = args.path[0] if args.path else '.'
+        custom_ignores = args.ignore.split(",") if args.ignore else []
+        use_parallel = getattr(args, "parallel", False)
+        show_animation = not getattr(args, "no_animation", False)
+        
+        files = scan_repository(root_path, custom_ignores, parallel=use_parallel, show_animation=show_animation)
+        detect_languages(files)
+        
+        typo_findings = scan_typos(files)
+        files_scanned = sum(1 for f in files if not f.is_binary)
+        use_color = not args.no_color and sys.stdout.isatty()
+        
+        print(format_typo_report(typo_findings, files_scanned, use_color))
+        sys.exit(0)
 
     # Load native config if exists
     from .config import load_config
@@ -494,8 +543,141 @@ jobs:
         print(c(f"⚡ Concurrently analyzed {len(root_paths)} repositories in {total_analysis_time:.2f}s", "96;1"))
         print(c("────────────────────────────────────────────────────────────", "90"))
         print()
+    
+    # Handle new features after analysis is complete
+    # Only run if specific feature flags are provided
+    if any([getattr(args, 'slides', None), getattr(args, 'schema', None), 
+            getattr(args, 'test', False), getattr(args, 'heatmap', None),
+            getattr(args, 'auto_commit', False)]):
+        try:
+            # Need to rescan if we have results (to get FileInfo objects with data)
+            if results and len(root_paths) > 0:
+                repo_path = root_paths[0]
+                
+                # Re-run analysis to get complete data
+                files = scan_repository(repo_path, custom_ignores, parallel=use_parallel, show_animation=False)
+                detect_languages(files)
+                analyze_metrics(files)
+                todos = scan_todos(files)
+                security = scan_security(files)
+                duplicates = scan_duplicates(files, args.duplicate_lines)
+                structure = check_project_structure(repo_path)
+                git_info = get_git_info(repo_path)
+                repo_name = os.path.basename(os.path.abspath(repo_path)) or "Unknown"
+                
+                data = ReportData(
+                    path=os.path.abspath(repo_path),
+                    name=repo_name,
+                    files=files,
+                    todos=todos,
+                    security=security,
+                    duplicates=duplicates,
+                    structure=structure,
+                    git=git_info,
+                    score=None
+                )
+                data.score = calculate_score(data)
+                
+                # --slides: Generate PowerPoint presentation
+                if getattr(args, 'slides', None):
+                    from .slides import create_pptx
+                    output_path = args.slides
+                    if not output_path:
+                        output_path = "reports/repodoctor_report.pptx"
+                    
+                    print(c("\nGenerating PowerPoint slides...", "96"))
+                    success = create_pptx(output_path, data)
+                    
+                    if success and os.path.exists(output_path):
+                        print(c(f"✓ Slides generated successfully", "92"))
+                        print(f"\nOutput:\n  {output_path}\n")
+                    else:
+                        print(c("✗ Failed to generate slides", "91"))
+                        exit_code = max(exit_code, 1)
+                
+                # --schema: Generate JSON schema
+                if getattr(args, 'schema', None):
+                    from .schema import generate_schema
+                    output_path = args.schema
+                    if not output_path:
+                        output_path = "reports/schema.json"
+                    
+                    print(c("\nGenerating repository schema...", "96"))
+                    success = generate_schema(data, output_path)
+                    
+                    if success and os.path.exists(output_path):
+                        print(c(f"✓ Schema generated successfully", "92"))
+                        print(f"\nOutput:\n  {output_path}\n")
+                    else:
+                        print(c("✗ Failed to generate schema", "91"))
+                        exit_code = max(exit_code, 1)
+                
+                # --test: Generate test files
+                if getattr(args, 'test', False):
+                    from .testgen import generate_tests, format_test_generation_report
+                    
+                    print(c("\nGenerating test files...", "96"))
+                    count, generated_files = generate_tests(files, verbose=getattr(args, 'verbose', False))
+                    
+                    use_color = not args.no_color and sys.stdout.isatty()
+                    print(format_test_generation_report(count, generated_files, use_color))
+                
+                # --heatmap: Generate heatmap visualization
+                if getattr(args, 'heatmap', None):
+                    from .heatmap import generate_heatmap
+                    output_path = args.heatmap
+                    if not output_path:
+                        output_path = "reports/heatmap.html"
+                    
+                    print(c("\nGenerating repository heatmap...", "96"))
+                    success = generate_heatmap(data, output_path)
+                    
+                    if success and os.path.exists(output_path):
+                        print(c(f"✓ Heatmap generated successfully", "92"))
+                        print(f"\nOutput:\n  {output_path}\n")
+                    else:
+                        print(c("✗ Failed to generate heatmap", "91"))
+                        exit_code = max(exit_code, 1)
+                
+                # --auto-commit: Commit changes to Git
+                if getattr(args, 'auto_commit', False):
+                    from .autocommit import auto_commit, format_auto_commit_report
+                    
+                    print(c("\nAuto-committing changes...", "96"))
+                    success, message = auto_commit(repo_path, verbose=getattr(args, 'verbose', False))
+                    
+                    use_color = not args.no_color and sys.stdout.isatty()
+                    print(format_auto_commit_report(success, message, use_color))
+                    
+                    if not success:
+                        exit_code = max(exit_code, 1)
+        
+        except KeyboardInterrupt:
+            print("\nRepoDoctor: operation cancelled by user.")
+            sys.exit(130)
+        except Exception as e:
+            if getattr(args, 'debug', False):
+                import traceback
+                traceback.print_exc()
+            else:
+                print(f"\nRepoDoctor Error: {e}")
+            exit_code = max(exit_code, 1)
 
+    
     sys.exit(exit_code)
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nRepoDoctor: operation cancelled by user.")
+        sys.exit(130)
+    except Exception as e:
+        import sys
+        if '--debug' in sys.argv:
+            import traceback
+            traceback.print_exc()
+        else:
+            print(f"\nRepoDoctor Error: Unexpected error occurred")
+            print(f"Run with --debug for more details")
+        sys.exit(1)

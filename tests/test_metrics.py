@@ -19,7 +19,7 @@ class TestMetrics(unittest.TestCase):
 
         f_info = FileInfo(filepath, "test.py", ".py", 100, 5, False, "Python", "test.py")
         analyze_metrics([f_info])
-        
+
         self.assertIsNotNone(f_info.metrics)
         self.assertEqual(f_info.metrics.num_classes, 1)
         self.assertEqual(f_info.metrics.num_functions, 1)

@@ -1,0 +1,222 @@
+"""
+Auto-commit functionality using Python standard library only.
+Automatically commits RepoDoctor changes to Git using subprocess.
+"""
+
+import subprocess
+import os
+from pathlib import Path
+from typing import Tuple, Optional
+
+
+def auto_commit(repo_path: str, verbose: bool = False) -> Tuple[bool, str]:
+    """
+    Automatically commit RepoDoctor changes to Git.
+    
+    Args:
+        repo_path: Path to the repository
+        verbose: Whether to print verbose output
+        
+    Returns:
+        Tuple of (success, message)
+    """
+    try:
+        # Check if Git is available
+        if not _is_git_available():
+            return False, "Git is not installed or not in PATH"
+        
+        # Check if this is a Git repository
+        if not _is_git_repo(repo_path):
+            return False, f"{repo_path} is not a Git repository"
+        
+        # Check for changes
+        has_changes, changed_files = _check_for_changes(repo_path)
+        
+        if not has_changes:
+            return True, "No changes to commit"
+        
+        # Show what will be committed
+        if verbose:
+            print(f"\nChanges detected: {len(changed_files)} file(s)")
+            for file in changed_files[:10]:  # Show first 10
+                print(f"  • {file}")
+            if len(changed_files) > 10:
+                print(f"  ... and {len(changed_files) - 10} more")
+        
+        # Stage RepoDoctor-related changes
+        success, stage_msg = _stage_changes(repo_path, changed_files)
+        if not success:
+            return False, f"Failed to stage changes: {stage_msg}"
+        
+        # Create commit
+        success, commit_msg, commit_hash = _create_commit(repo_path)
+        if not success:
+            return False, f"Failed to create commit: {commit_msg}"
+        
+        return True, f"Commit created successfully: {commit_hash[:7]}"
+        
+    except Exception as e:
+        return False, f"Error during auto-commit: {str(e)}"
+
+
+def _is_git_available() -> bool:
+    """Check if Git command is available."""
+    try:
+        result = subprocess.run(
+            ['git', '--version'],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        return result.returncode == 0
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return False
+
+
+def _is_git_repo(repo_path: str) -> bool:
+    """Check if the directory is a Git repository."""
+    try:
+        result = subprocess.run(
+            ['git', 'rev-parse', '--git-dir'],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        return result.returncode == 0
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return False
+
+
+def _check_for_changes(repo_path: str) -> Tuple[bool, list]:
+    """Check for uncommitted changes."""
+    try:
+        result = subprocess.run(
+            ['git', 'status', '--porcelain'],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        
+        if result.returncode != 0:
+            return False, []
+        
+        lines = result.stdout.strip().split('\n')
+        changed_files = [line[3:] for line in lines if line.strip()]
+        
+        return len(changed_files) > 0, changed_files
+        
+    except Exception:
+        return False, []
+
+
+def _stage_changes(repo_path: str, changed_files: list) -> Tuple[bool, str]:
+    """Stage RepoDoctor-related changes."""
+    try:
+        # Filter to only RepoDoctor-related files
+        repodoctor_files = []
+        for file in changed_files:
+            # Stage test files, reports, and documentation updates
+            if any(pattern in file.lower() for pattern in [
+                'test_', 'tests/', '/test/', 'report', '.md', 'schema', 'heatmap'
+            ]):
+                repodoctor_files.append(file)
+        
+        if not repodoctor_files:
+            # If no specific files, stage all changes
+            result = subprocess.run(
+                ['git', 'add', '-A'],
+                cwd=repo_path,
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+        else:
+            # Stage specific files
+            result = subprocess.run(
+                ['git', 'add'] + repodoctor_files,
+                cwd=repo_path,
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+        
+        if result.returncode != 0:
+            return False, result.stderr
+        
+        return True, "Changes staged successfully"
+        
+    except subprocess.TimeoutExpired:
+        return False, "Git add command timed out"
+    except Exception as e:
+        return False, str(e)
+
+
+def _create_commit(repo_path: str) -> Tuple[bool, str, str]:
+    """Create a Git commit."""
+    try:
+        commit_message = "chore: update repository analysis and tests\n\nGenerated by RepoDoctor"
+        
+        result = subprocess.run(
+            ['git', 'commit', '-m', commit_message],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        
+        if result.returncode != 0:
+            # Check if it's because there's nothing to commit
+            if "nothing to commit" in result.stdout.lower() or "nothing to commit" in result.stderr.lower():
+                return False, "Nothing to commit (changes may already be committed)", ""
+            return False, result.stderr, ""
+        
+        # Extract commit hash
+        commit_hash = _get_last_commit_hash(repo_path)
+        
+        return True, "Commit created", commit_hash
+        
+    except subprocess.TimeoutExpired:
+        return False, "Git commit command timed out", ""
+    except Exception as e:
+        return False, str(e), ""
+
+
+def _get_last_commit_hash(repo_path: str) -> str:
+    """Get the hash of the last commit."""
+    try:
+        result = subprocess.run(
+            ['git', 'rev-parse', 'HEAD'],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        
+        if result.returncode == 0:
+            return result.stdout.strip()
+        
+        return "unknown"
+        
+    except Exception:
+        return "unknown"
+
+
+def format_auto_commit_report(success: bool, message: str, use_color: bool = True) -> str:
+    """Format the auto-commit report."""
+    def color(text, code):
+        return f"\033[{code}m{text}\033[0m" if use_color else text
+    
+    report = []
+    report.append("")
+    report.append(color("Auto Commit", "96;1"))
+    report.append(color("───────────", "90"))
+    
+    if success:
+        report.append(color(f"✓ {message}", "92"))
+    else:
+        report.append(color(f"✗ {message}", "91"))
+    
+    report.append("")
+    return '\n'.join(report)

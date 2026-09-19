@@ -25,7 +25,7 @@ class TestSecurity(unittest.TestCase):
 
         f_info = FileInfo(filepath, ".env", "", 100, 1, False, "Unknown", ".env")
         findings = scan_security([f_info])
-        
+
         # Should flag .env itself, and the sk- token, and the API_KEY assignment
         self.assertGreaterEqual(len(findings), 2)
         categories = [f.category for f in findings]

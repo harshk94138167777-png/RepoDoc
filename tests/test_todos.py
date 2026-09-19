@@ -19,7 +19,7 @@ class TestTodos(unittest.TestCase):
 
         f_info = FileInfo(filepath, "test.py", ".py", 100, 4, False, "Python", "test.py")
         todos = scan_todos([f_info])
-        
+
         self.assertEqual(len(todos), 2)
         self.assertEqual(todos[0].marker, "TODO")
         self.assertEqual(todos[0].line_number, 1)
