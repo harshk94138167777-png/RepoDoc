@@ -24,7 +24,7 @@ repodoctor .
 
 
 
-## 🧠 What's New in v3.0.1 (The Ultimate Intelligence Update)
+## 🧠 What's New in v4.0.0 (The Ultimate Intelligence Update)
 - **Live Web Dashboard (`--serve`)**: Instantly spins up a local web server on `localhost:8080` to view your repository health in a gorgeous browser UI.
 - **Interactive TUI (`--interactive`)**: A blazing fast, fully navigable terminal dashboard. Use your arrow keys to explore your repository's health natively!
 - **Auto-Documentation (`--docs`)**: Parses every function and class across your project to automatically generate a `docs/api_reference.md` file.
