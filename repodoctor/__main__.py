@@ -2,6 +2,7 @@ import sys
 
 try:
     pass
+    from .v4_features import run_dead_code, run_dockerize, run_performance, run_legal, run_uml
     from .mega import run_speak, run_forecast, run_gamify, run_plagiarism, run_chaos, run_architecture, run_rage, run_watch, run_autocommit, run_heatmap, run_p2p, run_typosquat, run_gentests, run_explain_regex, run_schema, run_slides, run_play
     from .tui import launch_tui
     from .serve import start_server
@@ -234,6 +235,12 @@ def process_single_repo(root_path, args, idx, custom_ignores, use_parallel, show
         if getattr(args, "schema", False): mega_output.append(run_schema(files))
         if getattr(args, "slides", False): mega_output.append(run_slides(root_path, files))
         if getattr(args, "play", False): mega_output.append(run_play())
+        if getattr(args, "dead_code", False): mega_output.append(run_dead_code(files))
+        if getattr(args, "dockerize", False): mega_output.append(run_dockerize(files, root_path))
+        if getattr(args, "performance", False): mega_output.append(run_performance(files))
+        if getattr(args, "legal_scan", False): mega_output.append(run_legal(files))
+        if getattr(args, "uml", False): mega_output.append(run_uml(files, root_path))
+
         
         if mega_output:
             print("\n\n" + "\n".join(mega_output) + "\n")

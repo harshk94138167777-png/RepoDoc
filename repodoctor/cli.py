@@ -79,4 +79,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 def parse_args(args=None):
     parser = build_parser()
+    # v4 Features
+    parser.add_argument("--dead-code", action="store_true", help="Find functions that are never used")
+    parser.add_argument("--dockerize", action="store_true", help="Auto-generate Dockerfile and .dockerignore")
+    parser.add_argument("--performance", action="store_true", help="Scan for O(n^2) and string concats in loops")
+    parser.add_argument("--legal-scan", action="store_true", help="Scan requirements.txt for GPL/AGPL viral licenses")
+    parser.add_argument("--uml", action="store_true", help="Generate PlantUML/Mermaid class diagrams from Python code")
+    
     return parser.parse_args(args)

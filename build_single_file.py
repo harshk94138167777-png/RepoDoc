@@ -25,6 +25,7 @@ MODULES = [
     'docsgen.py',
     'legal.py',
     'mega.py',
+    'v4_features.py',
     'ai.py',
     'timemachine.py',
     'tui.py',
